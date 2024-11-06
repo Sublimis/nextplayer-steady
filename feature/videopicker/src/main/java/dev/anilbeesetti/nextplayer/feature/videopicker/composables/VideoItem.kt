@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -42,7 +44,7 @@ fun VideoItem(
     video: Video,
     isRecentlyPlayedVideo: Boolean,
     preferences: ApplicationPreferences,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     ListItemComponent(
@@ -56,7 +58,7 @@ fun VideoItem(
                 MaterialTheme.colorScheme.primary
             } else {
                 ListItemDefaults.colors().supportingTextColor
-            }
+            },
         ),
         leadingContent = {
             Box(
@@ -64,7 +66,7 @@ fun VideoItem(
                     .clip(MaterialTheme.shapes.small)
                     .background(MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp))
                     .width(min(150.dp, LocalConfiguration.current.screenWidthDp.dp * 0.35f))
-                    .aspectRatio(16f / 10f)
+                    .aspectRatio(16f / 10f),
             ) {
                 Icon(
                     imageVector = NextIcons.Video,
@@ -72,7 +74,7 @@ fun VideoItem(
                     tint = MaterialTheme.colorScheme.surfaceColorAtElevation(100.dp),
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .fillMaxSize(0.5f)
+                        .fillMaxSize(0.5f),
                 )
                 if (preferences.showThumbnailField) {
                     AsyncImage(
@@ -83,7 +85,7 @@ fun VideoItem(
                         contentDescription = null,
                         alignment = Alignment.Center,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
                 if (preferences.showDurationField) {
@@ -94,7 +96,14 @@ fun VideoItem(
                             .align(Alignment.BottomEnd),
                         backgroundColor = Color.Black.copy(alpha = 0.6f),
                         contentColor = Color.White,
-                        shape = MaterialTheme.shapes.extraSmall
+                        shape = MaterialTheme.shapes.extraSmall,
+                    )
+                }
+
+                if (preferences.showPlayedProgress && video.playedPercentage > 0) {
+                    LinearProgressIndicator(
+                        progress = { video.playedPercentage },
+                        modifier = Modifier.align(Alignment.BottomCenter),
                     )
                 }
             }
@@ -104,7 +113,7 @@ fun VideoItem(
                 text = if (preferences.showExtensionField) video.nameWithExtension else video.displayName,
                 maxLines = 2,
                 style = MaterialTheme.typography.titleMedium,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         },
         supportingContent = {
@@ -114,7 +123,7 @@ fun VideoItem(
                     maxLines = 2,
                     style = MaterialTheme.typography.bodySmall,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(vertical = 2.dp)
+                    modifier = Modifier.padding(vertical = 2.dp),
                 )
             }
             FlowRow(
@@ -122,7 +131,7 @@ fun VideoItem(
                     .fillMaxWidth()
                     .padding(vertical = 5.dp),
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
+                verticalArrangement = Arrangement.spacedBy(5.dp),
             ) {
                 if (preferences.showSizeField) {
                     InfoChip(text = video.formattedFileSize)
@@ -132,7 +141,7 @@ fun VideoItem(
                 }
             }
         },
-        modifier = modifier
+        modifier = modifier,
     )
 }
 
@@ -144,7 +153,7 @@ fun VideoItemRecentlyPlayedPreview() {
             VideoItem(
                 video = Video.sample,
                 preferences = ApplicationPreferences(),
-                isRecentlyPlayedVideo = true
+                isRecentlyPlayedVideo = true,
             )
         }
     }
@@ -158,7 +167,7 @@ fun VideoItemPreview() {
             VideoItem(
                 video = Video.sample,
                 preferences = ApplicationPreferences(),
-                isRecentlyPlayedVideo = false
+                isRecentlyPlayedVideo = false,
             )
         }
     }

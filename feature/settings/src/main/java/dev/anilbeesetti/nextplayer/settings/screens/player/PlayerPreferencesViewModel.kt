@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.anilbeesetti.nextplayer.core.data.repository.PreferencesRepository
+import dev.anilbeesetti.nextplayer.core.model.ControlButtonsPosition
 import dev.anilbeesetti.nextplayer.core.model.DoubleTapGesture
 import dev.anilbeesetti.nextplayer.core.model.FastSeek
 import dev.anilbeesetti.nextplayer.core.model.PlayerPreferences
@@ -19,13 +20,13 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class PlayerPreferencesViewModel @Inject constructor(
-    private val preferencesRepository: PreferencesRepository
+    private val preferencesRepository: PreferencesRepository,
 ) : ViewModel() {
 
     val preferencesFlow = preferencesRepository.playerPreferences.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = PlayerPreferences()
+        initialValue = PlayerPreferences(),
     )
 
     private val _uiState = MutableStateFlow(PlayerPreferencesUIState())
@@ -43,7 +44,7 @@ class PlayerPreferencesViewModel @Inject constructor(
         viewModelScope.launch {
             preferencesRepository.updatePlayerPreferences {
                 it.copy(
-                    resume = resume
+                    resume = resume,
                 )
             }
         }
@@ -81,7 +82,7 @@ class PlayerPreferencesViewModel @Inject constructor(
                         DoubleTapGesture.FAST_FORWARD_AND_REWIND
                     } else {
                         DoubleTapGesture.NONE
-                    }
+                    },
                 )
             }
         }
@@ -91,7 +92,7 @@ class PlayerPreferencesViewModel @Inject constructor(
         viewModelScope.launch {
             preferencesRepository.updatePlayerPreferences {
                 it.copy(
-                    fastSeek = if (it.fastSeek == FastSeek.DISABLE) FastSeek.AUTO else FastSeek.DISABLE
+                    fastSeek = if (it.fastSeek == FastSeek.DISABLE) FastSeek.AUTO else FastSeek.DISABLE,
                 )
             }
         }
@@ -161,6 +162,14 @@ class PlayerPreferencesViewModel @Inject constructor(
         }
     }
 
+    fun updatePreferredControlButtonsPosition(value: ControlButtonsPosition) {
+        viewModelScope.launch {
+            preferencesRepository.updatePlayerPreferences {
+                it.copy(controlButtonsPosition = value)
+            }
+        }
+    }
+
     fun updateDefaultPlaybackSpeed(value: Float) {
         viewModelScope.launch {
             preferencesRepository.updatePlayerPreferences {
@@ -193,7 +202,7 @@ class PlayerPreferencesViewModel @Inject constructor(
 }
 
 data class PlayerPreferencesUIState(
-    val showDialog: PlayerPreferenceDialog? = null
+    val showDialog: PlayerPreferenceDialog? = null,
 )
 
 sealed interface PlayerPreferenceDialog {
@@ -201,6 +210,7 @@ sealed interface PlayerPreferenceDialog {
     object DoubleTapDialog : PlayerPreferenceDialog
     object FastSeekDialog : PlayerPreferenceDialog
     object PlayerScreenOrientationDialog : PlayerPreferenceDialog
+    object ControlButtonsDialog : PlayerPreferenceDialog
     object PlaybackSpeedDialog : PlayerPreferenceDialog
     object LongPressControlsSpeedDialog : PlayerPreferenceDialog
     object ControllerTimeoutDialog : PlayerPreferenceDialog

@@ -197,4 +197,13 @@
     <string name="no_audio_tracks_found">مسار الصوت لهذا الفيديو إما غير متوفرة أو غير مدعومة.</string>
     <string name="floating_play_button_desc">إظهار زر عائم لتشغيل آخر فيديو شُغِل.</string>
     <string name="no_subtitle_tracks_found">مسار الترجمة لهذا الفيديو إما غير متوفرة أو غير مدعومة.</string>
+    <string name="skip_silence">تخطي الصمت</string>
+    <string name="folder">مجلد</string>
+    <string name="folders">مجلدات</string>
+    <string name="tree">مشجر</string>
+    <string name="played_progress">ما تم تشغيله</string>
+    <string name="media_view_mode">وضع عرض الوسائط</string>
+    <string name="control_buttons_alignment_left">يسار</string>
+    <string name="control_buttons_alignment_right">يمين</string>
+    <string name="control_buttons_alignment">محاذاة أزرار التحكم</string>
 </resources>

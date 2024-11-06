@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -33,8 +34,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -43,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -57,6 +62,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import dev.anilbeesetti.nextplayer.core.common.storagePermission
 import dev.anilbeesetti.nextplayer.core.model.ApplicationPreferences
+import dev.anilbeesetti.nextplayer.core.model.Folder
 import dev.anilbeesetti.nextplayer.core.model.Video
 import dev.anilbeesetti.nextplayer.core.ui.R
 import dev.anilbeesetti.nextplayer.core.ui.components.CancelButton
@@ -68,12 +74,10 @@ import dev.anilbeesetti.nextplayer.core.ui.designsystem.NextIcons
 import dev.anilbeesetti.nextplayer.core.ui.preview.DayNightPreview
 import dev.anilbeesetti.nextplayer.core.ui.preview.VideoPickerPreviewParameterProvider
 import dev.anilbeesetti.nextplayer.core.ui.theme.NextPlayerTheme
-import dev.anilbeesetti.nextplayer.feature.videopicker.composables.FoldersView
+import dev.anilbeesetti.nextplayer.feature.videopicker.composables.MediaView
 import dev.anilbeesetti.nextplayer.feature.videopicker.composables.QuickSettingsDialog
 import dev.anilbeesetti.nextplayer.feature.videopicker.composables.TextIconToggleButton
-import dev.anilbeesetti.nextplayer.feature.videopicker.composables.VideosView
-import dev.anilbeesetti.nextplayer.feature.videopicker.screens.FoldersState
-import dev.anilbeesetti.nextplayer.feature.videopicker.screens.VideosState
+import dev.anilbeesetti.nextplayer.feature.videopicker.screens.MediaState
 
 const val CIRCULAR_PROGRESS_INDICATOR_TEST_TAG = "circularProgressIndicator"
 
@@ -82,18 +86,18 @@ fun MediaPickerRoute(
     onSettingsClick: () -> Unit,
     onPlayVideo: (uri: Uri) -> Unit,
     onFolderClick: (folderPath: String) -> Unit,
-    viewModel: MediaPickerViewModel = hiltViewModel()
+    viewModel: MediaPickerViewModel = hiltViewModel(),
 ) {
-    val videosState by viewModel.videosState.collectAsStateWithLifecycle()
-    val foldersState by viewModel.foldersState.collectAsStateWithLifecycle()
     val preferences by viewModel.preferences.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val mediaState by viewModel.mediaState.collectAsStateWithLifecycle()
 
     val permissionState = rememberPermissionState(permission = storagePermission)
 
     MediaPickerScreen(
-        videosState = videosState,
-        foldersState = foldersState,
+        mediaState = mediaState,
         preferences = preferences,
+        isRefreshing = uiState.refreshing,
         permissionState = permissionState,
         onPlayVideo = onPlayVideo,
         onFolderClick = onFolderClick,
@@ -102,16 +106,17 @@ fun MediaPickerRoute(
         onDeleteVideoClick = { viewModel.deleteVideos(listOf(it)) },
         onDeleteFolderClick = { viewModel.deleteFolders(listOf(it)) },
         onAddToSync = viewModel::addToMediaInfoSynchronizer,
-        onRenameVideoClick = viewModel::renameVideo
+        onRenameVideoClick = viewModel::renameVideo,
+        onRefreshClicked = viewModel::onRefreshClicked,
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MediaPickerScreen(
-    videosState: VideosState,
-    foldersState: FoldersState,
+    mediaState: MediaState,
     preferences: ApplicationPreferences,
+    isRefreshing: Boolean = false,
     permissionState: PermissionState = GrantedPermissionState,
     onPlayVideo: (uri: Uri) -> Unit = {},
     onFolderClick: (folderPath: String) -> Unit = {},
@@ -119,15 +124,32 @@ internal fun MediaPickerScreen(
     updatePreferences: (ApplicationPreferences) -> Unit = {},
     onDeleteVideoClick: (String) -> Unit,
     onRenameVideoClick: (Uri, String) -> Unit = { _, _ -> },
-    onDeleteFolderClick: (String) -> Unit,
-    onAddToSync: (Uri) -> Unit = {}
+    onDeleteFolderClick: (Folder) -> Unit,
+    onAddToSync: (Uri) -> Unit = {},
+    onRefreshClicked: () -> Unit = {},
 ) {
-    var showMenu by rememberSaveable { mutableStateOf(false) }
+    var showQuickSettingsDialog by rememberSaveable { mutableStateOf(false) }
     var showUrlDialog by rememberSaveable { mutableStateOf(false) }
     val selectVideoFileLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
-        onResult = { it?.let(onPlayVideo) }
+        onResult = { it?.let(onPlayVideo) },
     )
+
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    LaunchedEffect(pullToRefreshState.isRefreshing) {
+        if (pullToRefreshState.isRefreshing) {
+            onRefreshClicked()
+        }
+    }
+
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            pullToRefreshState.startRefresh()
+        } else {
+            pullToRefreshState.endRefresh()
+        }
+    }
 
     Scaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
@@ -138,18 +160,18 @@ internal fun MediaPickerScreen(
                     IconButton(onClick = onSettingsClick) {
                         Icon(
                             imageVector = NextIcons.Settings,
-                            contentDescription = stringResource(id = R.string.settings)
+                            contentDescription = stringResource(id = R.string.settings),
                         )
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showMenu = true }) {
+                    IconButton(onClick = { showQuickSettingsDialog = true }) {
                         Icon(
                             imageVector = NextIcons.DashBoard,
-                            contentDescription = stringResource(id = R.string.menu)
+                            contentDescription = stringResource(id = R.string.menu),
                         )
                     }
-                }
+                },
             )
         },
         floatingActionButton = {
@@ -157,88 +179,86 @@ internal fun MediaPickerScreen(
             if (!permissionState.status.isGranted) return@Scaffold
             FloatingActionButton(
                 onClick = {
-                    val videoToPlay = if (preferences.groupVideosByFolder) {
-                        val state = foldersState as? FoldersState.Success
-                        state?.recentPlayedVideo ?: state?.firstVideo
-                    } else {
-                        val state = videosState as? VideosState.Success
-                        state?.recentPlayedVideo ?: state?.firstVideo
-                    }
+                    val state = mediaState as? MediaState.Success
+                    val videoToPlay = state?.data?.recentlyPlayedVideo ?: state?.data?.firstVideo
                     if (videoToPlay != null) {
                         onPlayVideo(Uri.parse(videoToPlay.uriString))
                     }
-                }
+                },
             ) {
                 Icon(
                     imageVector = NextIcons.Play,
-                    contentDescription = null
+                    contentDescription = null,
                 )
             }
-        }
-    ) {
-        Column(
+        },
+    ) { paddingValues ->
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(it)
+                .padding(paddingValues)
+                .nestedScroll(pullToRefreshState.nestedScrollConnection),
         ) {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Column(
+                modifier = Modifier.fillMaxSize(),
             ) {
-                item {
-                    ShortcutChipButton(
-                        text = stringResource(id = R.string.open_local_video),
-                        icon = NextIcons.FileOpen,
-                        onClick = { selectVideoFileLauncher.launch("video/*") }
-                    )
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    item {
+                        ShortcutChipButton(
+                            text = stringResource(id = R.string.open_local_video),
+                            icon = NextIcons.FileOpen,
+                            onClick = { selectVideoFileLauncher.launch("video/*") },
+                        )
+                    }
+                    item {
+                        ShortcutChipButton(
+                            text = stringResource(id = R.string.open_network_stream),
+                            icon = NextIcons.Link,
+                            onClick = { showUrlDialog = true },
+                        )
+                    }
                 }
-                item {
-                    ShortcutChipButton(
-                        text = stringResource(id = R.string.open_network_stream),
-                        icon = NextIcons.Link,
-                        onClick = { showUrlDialog = true }
-                    )
-                }
-            }
-            PermissionMissingView(
-                isGranted = permissionState.status.isGranted,
-                showRationale = permissionState.status.shouldShowRationale,
-                permission = permissionState.permission,
-                launchPermissionRequest = { permissionState.launchPermissionRequest() }
-            ) {
-                if (preferences.groupVideosByFolder) {
-                    FoldersView(
-                        foldersState = foldersState,
+                PermissionMissingView(
+                    isGranted = permissionState.status.isGranted,
+                    showRationale = permissionState.status.shouldShowRationale,
+                    permission = permissionState.permission,
+                    launchPermissionRequest = { permissionState.launchPermissionRequest() },
+                ) {
+                    MediaView(
+                        isLoading = mediaState is MediaState.Loading,
+                        rootFolder = (mediaState as? MediaState.Success)?.data,
                         preferences = preferences,
                         onFolderClick = onFolderClick,
-                        onDeleteFolderClick = onDeleteFolderClick
-                    )
-                } else {
-                    VideosView(
-                        videosState = videosState,
+                        onDeleteFolderClick = onDeleteFolderClick,
                         onVideoClick = onPlayVideo,
-                        preferences = preferences,
+                        onRenameVideoClick = onRenameVideoClick,
                         onDeleteVideoClick = onDeleteVideoClick,
                         onVideoLoaded = onAddToSync,
-                        onRenameVideoClick = onRenameVideoClick
                     )
                 }
             }
+
+            PullToRefreshContainer(
+                state = pullToRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
         }
     }
 
-    if (showMenu) {
+    if (showQuickSettingsDialog) {
         QuickSettingsDialog(
             applicationPreferences = preferences,
-            onDismiss = { showMenu = false },
-            updatePreferences = updatePreferences
+            onDismiss = { showQuickSettingsDialog = false },
+            updatePreferences = updatePreferences,
         )
     }
 
     if (showUrlDialog) {
         NetworkUrlDialog(
             onDismiss = { showUrlDialog = false },
-            onDone = { onPlayVideo(Uri.parse(it)) }
+            onDone = { onPlayVideo(Uri.parse(it)) },
         )
     }
 }
@@ -248,7 +268,7 @@ fun ShortcutChipButton(
     text: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -257,14 +277,14 @@ fun ShortcutChipButton(
             .clip(CircleShape)
             .clickable { onClick() }
             .background(color = MaterialTheme.colorScheme.surfaceColorAtElevation(5.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
 
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(20.dp),
-            tint = MaterialTheme.colorScheme.secondary
+            tint = MaterialTheme.colorScheme.secondary,
         )
         Text(text = text, style = MaterialTheme.typography.labelLarge)
     }
@@ -273,7 +293,7 @@ fun ShortcutChipButton(
 @Composable
 fun NetworkUrlDialog(
     onDismiss: () -> Unit,
-    onDone: (String) -> Unit
+    onDone: (String) -> Unit,
 ) {
     var url by rememberSaveable { mutableStateOf("") }
     NextDialog(
@@ -286,16 +306,16 @@ fun NetworkUrlDialog(
                 value = url,
                 onValueChange = { url = it },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(text = stringResource(R.string.example_url)) }
+                placeholder = { Text(text = stringResource(R.string.example_url)) },
             )
         },
         confirmButton = {
             DoneButton(
                 enabled = url.isNotBlank(),
-                onClick = { onDone(url) }
+                onClick = { onDone(url) },
             )
         },
-        dismissButton = { CancelButton(onClick = onDismiss) }
+        dismissButton = { CancelButton(onClick = onDismiss) },
     )
 }
 
@@ -303,20 +323,17 @@ fun NetworkUrlDialog(
 @Composable
 fun MediaPickerScreenPreview(
     @PreviewParameter(VideoPickerPreviewParameterProvider::class)
-    videos: List<Video>
+    videos: List<Video>,
 ) {
     NextPlayerTheme {
         Surface {
             MediaPickerScreen(
-                videosState = VideosState.Success(
-                    data = videos
-                ),
-                foldersState = FoldersState.Loading,
-                preferences = ApplicationPreferences().copy(groupVideosByFolder = false),
+                mediaState = MediaState.Loading,
+                preferences = ApplicationPreferences(),
                 onPlayVideo = {},
                 onFolderClick = {},
                 onDeleteVideoClick = {},
-                onDeleteFolderClick = {}
+                onDeleteFolderClick = {},
             )
         }
     }
@@ -329,7 +346,7 @@ fun ButtonPreview() {
         TextIconToggleButton(
             text = "Title",
             icon = NextIcons.Title,
-            onClick = {}
+            onClick = {},
         )
     }
 }
@@ -340,15 +357,12 @@ fun MediaPickerNoVideosFoundPreview() {
     NextPlayerTheme {
         Surface {
             MediaPickerScreen(
-                videosState = VideosState.Loading,
-                foldersState = FoldersState.Success(
-                    data = emptyList()
-                ),
+                mediaState = MediaState.Loading,
                 preferences = ApplicationPreferences(),
                 onPlayVideo = {},
                 onFolderClick = {},
                 onDeleteVideoClick = {},
-                onDeleteFolderClick = {}
+                onDeleteFolderClick = {},
             )
         }
     }
@@ -360,13 +374,12 @@ fun MediaPickerLoadingPreview() {
     NextPlayerTheme {
         Surface {
             MediaPickerScreen(
-                videosState = VideosState.Loading,
-                foldersState = FoldersState.Loading,
+                mediaState = MediaState.Loading,
                 preferences = ApplicationPreferences(),
                 onPlayVideo = {},
                 onFolderClick = {},
                 onDeleteVideoClick = {},
-                onDeleteFolderClick = {}
+                onDeleteFolderClick = {},
             )
         }
     }

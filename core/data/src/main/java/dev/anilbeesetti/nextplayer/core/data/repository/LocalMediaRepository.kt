@@ -23,7 +23,7 @@ import timber.log.Timber
 class LocalMediaRepository @Inject constructor(
     private val mediumDao: MediumDao,
     private val directoryDao: DirectoryDao,
-    @ApplicationScope private val applicationScope: CoroutineScope
+    @ApplicationScope private val applicationScope: CoroutineScope,
 ) : MediaRepository {
 
     override fun getVideosFlow(): Flow<List<Video>> {
@@ -48,10 +48,11 @@ class LocalMediaRepository @Inject constructor(
         audioTrackIndex: Int?,
         subtitleTrackIndex: Int?,
         playbackSpeed: Float?,
-        externalSubs: List<Uri>
+        externalSubs: List<Uri>,
+        videoScale: Float,
     ) {
         Timber.d(
-            "save state for [$uri]: [$position, $audioTrackIndex, $subtitleTrackIndex, $playbackSpeed]"
+            "save state for [$uri]: [$position, $audioTrackIndex, $subtitleTrackIndex, $playbackSpeed]",
         )
 
         applicationScope.launch {
@@ -62,7 +63,8 @@ class LocalMediaRepository @Inject constructor(
                 subtitleTrackIndex = subtitleTrackIndex,
                 playbackSpeed = playbackSpeed,
                 externalSubs = UriListConverter.fromListToString(externalSubs),
-                lastPlayedTime = System.currentTimeMillis()
+                lastPlayedTime = System.currentTimeMillis(),
+                videoScale = videoScale,
             )
         }
     }

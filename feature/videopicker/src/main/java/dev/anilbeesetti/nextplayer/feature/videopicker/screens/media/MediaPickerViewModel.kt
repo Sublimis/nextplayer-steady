@@ -4,53 +4,48 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.anilbeesetti.nextplayer.core.data.repository.MediaRepository
 import dev.anilbeesetti.nextplayer.core.data.repository.PreferencesRepository
-import dev.anilbeesetti.nextplayer.core.domain.GetSortedFoldersUseCase
-import dev.anilbeesetti.nextplayer.core.domain.GetSortedVideosUseCase
+import dev.anilbeesetti.nextplayer.core.domain.GetSortedMediaUseCase
 import dev.anilbeesetti.nextplayer.core.media.services.MediaService
 import dev.anilbeesetti.nextplayer.core.media.sync.MediaInfoSynchronizer
+import dev.anilbeesetti.nextplayer.core.media.sync.MediaSynchronizer
 import dev.anilbeesetti.nextplayer.core.model.ApplicationPreferences
-import dev.anilbeesetti.nextplayer.feature.videopicker.screens.FoldersState
-import dev.anilbeesetti.nextplayer.feature.videopicker.screens.VideosState
+import dev.anilbeesetti.nextplayer.core.model.Folder
+import dev.anilbeesetti.nextplayer.feature.videopicker.screens.MediaState
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MediaPickerViewModel @Inject constructor(
-    getSortedVideosUseCase: GetSortedVideosUseCase,
-    getSortedFoldersUseCase: GetSortedFoldersUseCase,
+    getSortedMediaUseCase: GetSortedMediaUseCase,
     private val mediaService: MediaService,
-    private val mediaRepository: MediaRepository,
     private val preferencesRepository: PreferencesRepository,
-    private val mediaInfoSynchronizer: MediaInfoSynchronizer
+    private val mediaInfoSynchronizer: MediaInfoSynchronizer,
+    private val mediaSynchronizer: MediaSynchronizer,
 ) : ViewModel() {
 
-    val videosState = getSortedVideosUseCase.invoke()
-        .map { VideosState.Success(it) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = VideosState.Loading
-        )
+    private val uiStateInternal = MutableStateFlow(MediaPickerUiState())
+    val uiState = uiStateInternal.asStateFlow()
 
-    val foldersState = getSortedFoldersUseCase.invoke()
-        .map { FoldersState.Success(it) }
+    val mediaState = getSortedMediaUseCase.invoke()
+        .map { MediaState.Success(it) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = FoldersState.Loading
+            initialValue = MediaState.Loading,
         )
 
     val preferences = preferencesRepository.applicationPreferences
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = ApplicationPreferences()
+            initialValue = ApplicationPreferences(),
         )
 
     fun updateMenu(applicationPreferences: ApplicationPreferences) {
@@ -65,11 +60,11 @@ class MediaPickerViewModel @Inject constructor(
         }
     }
 
-    fun deleteFolders(paths: List<String>) {
+    fun deleteFolders(folders: List<Folder>) {
         viewModelScope.launch {
-            val uris = paths.flatMap { path ->
-                mediaRepository.getVideosFlowFromFolderPath(path).first().mapNotNull {
-                    Uri.parse(it.uriString)
+            val uris = folders.flatMap { folder ->
+                folder.allMediaList.mapNotNull { video ->
+                    Uri.parse(video.uriString)
                 }
             }
             mediaService.deleteMedia(uris)
@@ -87,4 +82,16 @@ class MediaPickerViewModel @Inject constructor(
             mediaService.renameMedia(uri, to)
         }
     }
+
+    fun onRefreshClicked() {
+        viewModelScope.launch {
+            uiStateInternal.update { it.copy(refreshing = true) }
+            mediaSynchronizer.refresh()
+            uiStateInternal.update { it.copy(refreshing = false) }
+        }
+    }
 }
+
+data class MediaPickerUiState(
+    val refreshing: Boolean = false,
+)

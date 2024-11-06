@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import dev.anilbeesetti.nextplayer.core.common.Utils
 import dev.anilbeesetti.nextplayer.core.model.ApplicationPreferences
 import dev.anilbeesetti.nextplayer.core.model.Folder
 import dev.anilbeesetti.nextplayer.core.ui.R
@@ -33,7 +34,7 @@ fun FolderItem(
     folder: Folder,
     isRecentlyPlayedFolder: Boolean,
     preferences: ApplicationPreferences,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     ListItemComponent(
         colors = ListItemDefaults.colors(
@@ -46,7 +47,7 @@ fun FolderItem(
                 MaterialTheme.colorScheme.primary
             } else {
                 ListItemDefaults.colors().supportingTextColor
-            }
+            },
         ),
         leadingContent = {
             Icon(
@@ -54,8 +55,8 @@ fun FolderItem(
                 contentDescription = "",
                 tint = MaterialTheme.colorScheme.secondaryContainer,
                 modifier = Modifier
-                    .width(min(100.dp, LocalConfiguration.current.screenWidthDp.dp * 0.3f))
-                    .aspectRatio(20 / 15f)
+                    .width(min(90.dp, LocalConfiguration.current.screenWidthDp.dp * 0.3f))
+                    .aspectRatio(20 / 17f),
             )
         },
         headlineContent = {
@@ -63,7 +64,7 @@ fun FolderItem(
                 text = folder.name,
                 maxLines = 2,
                 style = MaterialTheme.typography.titleMedium,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         },
         supportingContent = {
@@ -73,7 +74,7 @@ fun FolderItem(
                     maxLines = 2,
                     style = MaterialTheme.typography.bodySmall,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(vertical = 2.dp)
+                    modifier = Modifier.padding(vertical = 2.dp),
                 )
             }
             FlowRow(
@@ -81,18 +82,26 @@ fun FolderItem(
                     .fillMaxWidth()
                     .padding(vertical = 5.dp),
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
+                verticalArrangement = Arrangement.spacedBy(5.dp),
             ) {
-                InfoChip(
-                    text = "${folder.mediaCount} " +
-                        stringResource(id = R.string.video.takeIf { folder.mediaCount == 1 } ?: R.string.videos)
-                )
+                if (folder.mediaList.isNotEmpty()) {
+                    InfoChip(
+                        text = "${folder.mediaList.size} " +
+                            stringResource(id = R.string.video.takeIf { folder.mediaList.size == 1 } ?: R.string.videos),
+                    )
+                }
+                if (folder.folderList.isNotEmpty()) {
+                    InfoChip(
+                        text = "${folder.folderList.size} " +
+                            stringResource(id = R.string.folder.takeIf { folder.folderList.size == 1 } ?: R.string.folders),
+                    )
+                }
                 if (preferences.showSizeField) {
-                    InfoChip(text = folder.formattedMediaSize)
+                    InfoChip(text = Utils.formatFileSize(folder.mediaSize))
                 }
             }
         },
-        modifier = modifier
+        modifier = modifier,
     )
 }
 
@@ -103,7 +112,7 @@ fun FolderItemRecentlyPlayedPreview() {
         FolderItem(
             folder = Folder.sample,
             preferences = ApplicationPreferences(),
-            isRecentlyPlayedFolder = true
+            isRecentlyPlayedFolder = true,
         )
     }
 }
@@ -115,7 +124,7 @@ fun FolderItemPreview() {
         FolderItem(
             folder = Folder.sample,
             preferences = ApplicationPreferences(),
-            isRecentlyPlayedFolder = false
+            isRecentlyPlayedFolder = false,
         )
     }
 }

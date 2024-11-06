@@ -50,7 +50,7 @@
     <string name="dark_theme">Σκοτεινό θέμα</string>
     <string name="video_zoom">Μεγέθυνση βίντεο</string>
     <string name="dynamic_theme">Δυναμικό χρώμα</string>
-    <string name="dynamic_theme_description">Εφαρμογή χρωμάτων από την ταπετσαρία συστήματος στο θέμα</string>
+    <string name="dynamic_theme_description">Εφαρμογή χρωμάτων ταπετσαρίας στο θέμα</string>
     <string name="controls_lock">Κλείδωμα χειριστηρίων</string>
     <string name="controls_unlock">Ξεκλείδωμα χειριστηρίων</string>
     <string name="select_playback_speed">Επιλογή ταχύτητας αναπαραγωγής</string>
@@ -92,8 +92,8 @@
     <string name="enable">Ενεργή</string>
     <string name="no">Όχι</string>
     <string name="manage_folders_desc">Επιλέξτε φακέλους που θα εξαιρεθούν από τη βιβλιοθήκη πολυμέσων</string>
-    <string name="video">βίντεο</string>
-    <string name="videos">βίντεο</string>
+    <string name="video">Βίντεο</string>
+    <string name="videos">Βίντεο</string>
     <string name="screen_rotation">Διάταξη οθόνης</string>
     <string name="portrait">Κάθετη</string>
     <string name="automatic">Αυτόματη</string>
@@ -183,7 +183,7 @@
     <string name="volume_boost_desc">Ενίσχυση έντασης έως 200%</string>
     <string name="volume_boost">Ενίσχυση έντασης</string>
     <string name="rename">Μετονομασία</string>
-    <string name="pip_settings_description">Αυτόματη εναλλαγή σε αιωρούμενη οθόνη όταν πατάτε το κουμπί αρχικής οθόνης</string>
+    <string name="pip_settings_description">Εναλλαγή σε αιωρούμενη οθόνη όταν πατάτε το κουμπί αρχικής οθόνης</string>
     <string name="pip_settings">Αιωρούμενη οθόνη</string>
     <string name="no_subtitle_tracks_found">Τα κομμάτια υποτίτλων για αυτό το βίντεο είτε δεν είναι διαθέσιμα είτε δεν υποστηρίζονται.</string>
     <string name="no_audio_tracks_found">Τα κομμάτια ήχου για αυτό το βίντεο είτε δεν είναι διαθέσιμα είτε δεν υποστηρίζονται.</string>
@@ -197,4 +197,13 @@
     <string name="floating_play_button">Αιωρούμενο κουμπί</string>
     <string name="floating_play_button_desc">Εμφάνιση κουμπιού αναπαραγωγής πρόσφατου βίντεο.</string>
     <string name="mark_last_played_media_desc">Επισήμανση τελευταίας αναπαραγωγής σε κάθε φάκελο</string>
+    <string name="skip_silence">Παράκαμψη σίγασης</string>
+    <string name="folders">Φάκελοι</string>
+    <string name="folder">Φάκελος</string>
+    <string name="tree">Δένδρο</string>
+    <string name="played_progress">Πρόοδος αναπαραγωγής</string>
+    <string name="media_view_mode">Τρόπος προβολής πολυμέσων</string>
+    <string name="control_buttons_alignment_left">Αριστερά</string>
+    <string name="control_buttons_alignment_right">Δεξιά</string>
+    <string name="control_buttons_alignment">Ευθυγράμμιση κουμπιών</string>
 </resources>

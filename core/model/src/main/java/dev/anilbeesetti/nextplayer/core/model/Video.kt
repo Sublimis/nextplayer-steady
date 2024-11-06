@@ -9,11 +9,11 @@ data class Video(
     val parentPath: String = "",
     val duration: Long,
     val uriString: String,
-    val displayName: String,
     val nameWithExtension: String,
     val width: Int,
     val height: Int,
     val size: Long,
+    val playbackPosition: Long = 200,
     val dateModified: Long = 0,
     val formattedDuration: String = "",
     val formattedFileSize: String = "",
@@ -22,8 +22,11 @@ data class Video(
     val lastPlayedAt: Date? = null,
     val videoStream: VideoStreamInfo? = null,
     val audioStreams: List<AudioStreamInfo> = emptyList(),
-    val subtitleStreams: List<SubtitleStreamInfo> = emptyList()
+    val subtitleStreams: List<SubtitleStreamInfo> = emptyList(),
 ) : Serializable {
+
+    val displayName: String = nameWithExtension.substringBeforeLast(".")
+    val playedPercentage: Float = (playbackPosition.toFloat() / duration.toFloat()).takeIf { playbackPosition >= 0 } ?: 1f
 
     companion object {
         val sample = Video(
@@ -33,12 +36,15 @@ data class Video(
             uriString = "",
             nameWithExtension = "Avengers Endgame (2019) BluRay x264.mp4",
             duration = 1000,
-            displayName = "Avengers Endgame (2019) BluRay x264",
             width = 1920,
             height = 1080,
             size = 1000,
             formattedDuration = "29.36",
-            formattedFileSize = "320KB"
+            formattedFileSize = "320KB",
+            playbackPosition = 200,
         )
     }
 }
+
+fun List<Video>.recentPlayed(): Video? =
+    filter { it.lastPlayedAt != null }.sortedByDescending { it.lastPlayedAt?.time }.firstOrNull()

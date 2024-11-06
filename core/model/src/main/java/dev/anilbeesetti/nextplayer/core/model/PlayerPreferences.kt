@@ -11,6 +11,7 @@ data class PlayerPreferences(
     val minDurationForFastSeek: Long = 120000L,
     val rememberSelections: Boolean = true,
     val playerScreenOrientation: ScreenOrientation = ScreenOrientation.VIDEO_ORIENTATION,
+    val controlButtonsPosition: ControlButtonsPosition = ControlButtonsPosition.LEFT,
     val playerVideoZoom: VideoZoom = VideoZoom.BEST_FIT,
     val defaultPlaybackSpeed: Float = 1.0f,
     val controllerAutoHideTimeout: Int = 2,
@@ -44,5 +45,5 @@ data class PlayerPreferences(
     val applyEmbeddedStyles: Boolean = true,
 
     // Decoder Preferences
-    val decoderPriority: DecoderPriority = DecoderPriority.PREFER_DEVICE
+    val decoderPriority: DecoderPriority = DecoderPriority.PREFER_DEVICE,
 )

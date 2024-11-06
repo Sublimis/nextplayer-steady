@@ -31,7 +31,7 @@ class LocalMediaInfoSynchronizer @Inject constructor(
     private val mediumDao: MediumDao,
     @ApplicationScope private val applicationScope: CoroutineScope,
     @ApplicationContext private val context: Context,
-    @Dispatcher(NextDispatchers.Default) private val dispatcher: CoroutineDispatcher
+    @Dispatcher(NextDispatchers.Default) private val dispatcher: CoroutineDispatcher,
 ) : MediaInfoSynchronizer {
 
     private val media = MutableSharedFlow<Uri>()
@@ -55,20 +55,24 @@ class LocalMediaInfoSynchronizer @Inject constructor(
             val thumbnail = runCatching { mediaInfo.getFrame() }.getOrNull()
             mediaInfo.release()
 
-            val videoStreamInfo =
-                mediaInfo.videoStream?.toVideoStreamInfoEntity(medium.mediumEntity.uriString)
-            val audioStreamsInfo =
-                mediaInfo.audioStreams.map { it.toAudioStreamInfoEntity(medium.mediumEntity.uriString) }
-            val subtitleStreamsInfo =
-                mediaInfo.subtitleStreams.map { it.toSubtitleStreamInfoEntity(medium.mediumEntity.uriString) }
-            val thumbnailPath =
-                thumbnail?.saveTo(storageDir = context.thumbnailCacheDir, quality = 30)
+            val videoStreamInfo = mediaInfo.videoStream?.toVideoStreamInfoEntity(medium.mediumEntity.uriString)
+            val audioStreamsInfo = mediaInfo.audioStreams.map {
+                it.toAudioStreamInfoEntity(medium.mediumEntity.uriString)
+            }
+            val subtitleStreamsInfo = mediaInfo.subtitleStreams.map {
+                it.toSubtitleStreamInfoEntity(medium.mediumEntity.uriString)
+            }
+            val thumbnailPath = thumbnail?.saveTo(
+                storageDir = context.thumbnailCacheDir,
+                quality = 40,
+                fileName = medium.mediumEntity.mediaStoreId.toString(),
+            )
 
             mediumDao.upsert(
                 medium.mediumEntity.copy(
                     format = mediaInfo.format,
-                    thumbnailPath = thumbnailPath
-                )
+                    thumbnailPath = thumbnailPath,
+                ),
             )
             videoStreamInfo?.let { mediumDao.upsertVideoStreamInfo(it) }
             audioStreamsInfo.onEach { mediumDao.upsertAudioStreamInfo(it) }
@@ -85,7 +89,7 @@ class LocalMediaInfoSynchronizer @Inject constructor(
     }
 }
 
-fun VideoStream.toVideoStreamInfoEntity(mediumUri: String) = VideoStreamInfoEntity(
+private fun VideoStream.toVideoStreamInfoEntity(mediumUri: String) = VideoStreamInfoEntity(
     index = index,
     title = title,
     codecName = codecName,
@@ -95,10 +99,10 @@ fun VideoStream.toVideoStreamInfoEntity(mediumUri: String) = VideoStreamInfoEnti
     frameRate = frameRate,
     frameWidth = frameWidth,
     frameHeight = frameHeight,
-    mediumUri = mediumUri
+    mediumUri = mediumUri,
 )
 
-fun AudioStream.toAudioStreamInfoEntity(mediumUri: String) = AudioStreamInfoEntity(
+private fun AudioStream.toAudioStreamInfoEntity(mediumUri: String) = AudioStreamInfoEntity(
     index = index,
     title = title,
     codecName = codecName,
@@ -109,28 +113,30 @@ fun AudioStream.toAudioStreamInfoEntity(mediumUri: String) = AudioStreamInfoEnti
     sampleRate = sampleRate,
     channels = channels,
     channelLayout = channelLayout,
-    mediumUri = mediumUri
+    mediumUri = mediumUri,
 )
 
-fun SubtitleStream.toSubtitleStreamInfoEntity(mediumUri: String) = SubtitleStreamInfoEntity(
+private fun SubtitleStream.toSubtitleStreamInfoEntity(mediumUri: String) = SubtitleStreamInfoEntity(
     index = index,
     title = title,
     codecName = codecName,
     language = language,
     disposition = disposition,
-    mediumUri = mediumUri
+    mediumUri = mediumUri,
 )
 
-suspend fun Bitmap.saveTo(storageDir: File, quality: Int = 100): String? =
-    withContext(Dispatchers.IO) {
-        val thumbnailFileName = "thumbnail-${System.currentTimeMillis()}"
-        val thumbFile = File(storageDir, thumbnailFileName)
-        try {
-            FileOutputStream(thumbFile).use { fos ->
-                compress(Bitmap.CompressFormat.JPEG, quality, fos)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
+suspend fun Bitmap.saveTo(
+    storageDir: File,
+    quality: Int = 100,
+    fileName: String,
+): String? = withContext(Dispatchers.IO) {
+    val thumbFile = File(storageDir, fileName)
+    try {
+        FileOutputStream(thumbFile).use { fos ->
+            compress(Bitmap.CompressFormat.JPEG, quality, fos)
         }
-        return@withContext if (thumbFile.exists()) thumbFile.path else null
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
+    return@withContext if (thumbFile.exists()) thumbFile.path else null
+}
