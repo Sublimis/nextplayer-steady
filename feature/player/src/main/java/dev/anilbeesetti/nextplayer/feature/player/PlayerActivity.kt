@@ -104,6 +104,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import lib.steadyscreen.SteadyScreen
 import timber.log.Timber
 
 @SuppressLint("UnsafeOptInUsageError")
@@ -182,6 +183,8 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var videoZoomButton: ImageButton
     private lateinit var playInBackgroundButton: ImageButton
     private lateinit var extraControls: LinearLayout
+
+    protected val steadyScreen: SteadyScreen = SteadyScreen(this)
 
     private val isPipSupported: Boolean by lazy {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
@@ -348,6 +351,9 @@ class PlayerActivity : AppCompatActivity() {
             subtitleFileLauncherLaunchedForMediaItem = null
         }
         initializePlayerView()
+
+        steadyScreen.clear();
+        steadyScreen.attachView(binding.playerView);
     }
 
     override fun onStop() {
@@ -374,6 +380,7 @@ class PlayerActivity : AppCompatActivity() {
             MediaController.releaseFuture(this)
             controllerFuture = null
         }
+        steadyScreen.destroy();
         super.onStop()
     }
 

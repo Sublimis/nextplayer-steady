@@ -22,10 +22,9 @@ android {
         compose = true
         buildConfig = true
     }
-
     compileOptions {
-        sourceCompatibility = JavaVersion.toVersion(libs.versions.android.jvm.get().toInt())
-        targetCompatibility = JavaVersion.toVersion(libs.versions.android.jvm.get().toInt())
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
@@ -40,6 +39,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
 
         getByName("debug") {
@@ -116,6 +116,8 @@ dependencies {
     implementation(libs.accompanist.permissions)
 
     implementation(libs.timber)
+
+    implementation(libs.steadyscreenlib)
 
     testImplementation(libs.junit4)
     androidTestImplementation(platform(libs.androidx.compose.bom))

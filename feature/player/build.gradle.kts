@@ -65,8 +65,7 @@ dependencies {
 
     implementation(libs.timber)
 
-    implementation(libs.steadyview)
-    implementation(libs.steadyviews)
+    implementation(libs.steadyscreenlib)
 
     testImplementation(libs.junit4)
     androidTestImplementation(libs.androidx.test.ext)
