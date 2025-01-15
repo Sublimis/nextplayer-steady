@@ -98,6 +98,7 @@ import dev.anilbeesetti.nextplayer.feature.player.utils.PlayerApi
 import dev.anilbeesetti.nextplayer.feature.player.utils.PlayerGestureHelper
 import dev.anilbeesetti.nextplayer.feature.player.utils.VolumeManager
 import dev.anilbeesetti.nextplayer.feature.player.utils.toMillis
+import io.github.sublimis.steadyscreen.SteadyScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -182,6 +183,8 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var videoZoomButton: ImageButton
     private lateinit var playInBackgroundButton: ImageButton
     private lateinit var extraControls: LinearLayout
+
+    protected val steadyScreen: SteadyScreen = SteadyScreen(this)
 
     private val isPipSupported: Boolean by lazy {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
@@ -348,6 +351,9 @@ class PlayerActivity : AppCompatActivity() {
             subtitleFileLauncherLaunchedForMediaItem = null
         }
         initializePlayerView()
+
+        steadyScreen.clear();
+        steadyScreen.attachView(binding.playerView);
     }
 
     override fun onStop() {
@@ -374,6 +380,7 @@ class PlayerActivity : AppCompatActivity() {
             MediaController.releaseFuture(this)
             controllerFuture = null
         }
+        steadyScreen.destroy();
         super.onStop()
     }
 

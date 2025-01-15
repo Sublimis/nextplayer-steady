@@ -65,6 +65,8 @@ dependencies {
 
     implementation(libs.timber)
 
+    implementation(libs.steadyscreenlib)
+
     testImplementation(libs.junit4)
     androidTestImplementation(libs.androidx.test.ext)
     androidTestImplementation(libs.androidx.test.espresso.core)
