@@ -34,7 +34,7 @@ nextlib = "0.8.4"
 room = "2.6.1"
 timber = "5.0.1"
 universalChardet = "2.5.0"
-steadyscreenlib = "main-SNAPSHOT"
+steadyscreenlib = "2.0"
 
 
 [libraries]
@@ -86,7 +86,7 @@ kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
-steadyscreenlib = { group = "com.github.Sublimis", name = "SteadyScreenLib", version.ref = "steadyscreenlib" }
+steadyscreenlib = { group = "io.github.sublimis.steadyscreen", name = "steadyscreen-lib", version.ref = "steadyscreenlib" }
 
 [plugins]
 aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
