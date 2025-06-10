@@ -4,34 +4,33 @@ android-targetSdk = "35"
 android-minSdk = "21"
 android-jvm = "17"
 aboutlibraries = "11.2.3"
-accompanist = "0.37.0"
+accompanist = "0.37.3"
 androidGradlePlugin = "8.7.3"
 androidMaterial = "1.12.0"
-androidxActivity = "1.9.3"
+androidxActivity = "1.10.1"
 androidxAppCompat = "1.7.0"
-androidxComposeBom = "2024.12.01"
-androidxConstraintLayout = "2.2.0"
+androidxComposeBom = "2025.05.01"
+androidxConstraintLayout = "2.2.1"
 androidxCore = "1.15.0"
 androidxCoreSplashscreen = "1.0.1"
-androidxDataStore = "1.1.1"
+androidxDataStore = "1.1.7"
 androidxEspresso = "3.6.1"
 androidxHiltNavigationCompose = "1.2.0"
-androidxLifecycle = "2.8.7"
-androidxMedia3 = "1.5.1"
+androidxLifecycle = "2.9.1"
+androidxMedia3 = "1.7.1"
 androidxNavigation = "2.8.5"
 androidxTestCore = "1.5.0"
 androidxTestExt = "1.2.1"
 coil = "2.7.0"
 hilt = "2.54"
 junit4 = "4.13.2"
-kotlin = "2.1.0"
-kotlinxCoroutines = "1.10.1"
-kotlinxCoroutinesGuava = "1.10.1"
-kotlinxSerializationJson = "1.7.3"
-ksp = "2.1.0-1.0.29"
+kotlin = "2.1.21"
+kotlinxCoroutines = "1.10.2"
+kotlinxSerializationJson = "1.8.1"
+ksp = "2.1.21-2.0.1"
 ktlint = "12.1.2"
-nextlib = "0.8.4"
-room = "2.6.1"
+room = "2.7.1"
+nextlib = "1.7.1-0.9.0"
 timber = "5.0.1"
 universalChardet = "2.5.0"
 steadyscreenlib = "2.0"
@@ -75,14 +74,14 @@ androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espres
 androidx-test-ext = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "androidxTestExt" }
 coil-kt-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 github-albfernandez-juniversalchardet = { group="com.github.albfernandez", name = "juniversalchardet", version.ref="universalChardet" }
-github-anilbeesetti-nextlib-media3ext = { group = "com.github.anilbeesetti.nextlib", name = "nextlib-media3ext", version.ref = "nextlib" }
-github-anilbeesetti-nextlib-mediainfo = { group = "com.github.anilbeesetti.nextlib", name = "nextlib-mediainfo", version.ref = "nextlib" }
+github-anilbeesetti-nextlib-media3ext = { group = "io.github.anilbeesetti", name = "nextlib-media3ext", version.ref = "nextlib" }
+github-anilbeesetti-nextlib-mediainfo = { group = "io.github.anilbeesetti", name = "nextlib-mediainfo", version.ref = "nextlib" }
 google-android-material = { group = "com.google.android.material", name = "material", version.ref = "androidMaterial" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
-kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "kotlinxCoroutinesGuava" }
+kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }

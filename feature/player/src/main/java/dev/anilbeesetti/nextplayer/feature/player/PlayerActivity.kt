@@ -68,6 +68,7 @@ import dev.anilbeesetti.nextplayer.core.common.Utils
 import dev.anilbeesetti.nextplayer.core.common.extensions.getMediaContentUri
 import dev.anilbeesetti.nextplayer.core.common.extensions.isDeviceTvBox
 import dev.anilbeesetti.nextplayer.core.model.ControlButtonsPosition
+import dev.anilbeesetti.nextplayer.core.model.LoopMode
 import dev.anilbeesetti.nextplayer.core.model.ThemeConfig
 import dev.anilbeesetti.nextplayer.core.model.VideoZoom
 import dev.anilbeesetti.nextplayer.core.ui.R as coreUiR
@@ -98,7 +99,6 @@ import dev.anilbeesetti.nextplayer.feature.player.utils.PlayerApi
 import dev.anilbeesetti.nextplayer.feature.player.utils.PlayerGestureHelper
 import dev.anilbeesetti.nextplayer.feature.player.utils.VolumeManager
 import dev.anilbeesetti.nextplayer.feature.player.utils.toMillis
-import io.github.sublimis.steadyscreen.SteadyScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -132,6 +132,8 @@ class PlayerActivity : AppCompatActivity() {
 
     private var playInBackground: Boolean = false
     private var isIntentNew: Boolean = true
+
+    private var isPipActive: Boolean = false
 
     private val shouldFastSeek: Boolean
         get() = playerPreferences.shouldFastSeek(mediaController?.duration ?: C.TIME_UNSET)
@@ -182,9 +184,8 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var videoTitleTextView: TextView
     private lateinit var videoZoomButton: ImageButton
     private lateinit var playInBackgroundButton: ImageButton
+    private lateinit var loopModeButton: ImageButton
     private lateinit var extraControls: LinearLayout
-
-    protected val steadyScreen: SteadyScreen = SteadyScreen(this)
 
     private val isPipSupported: Boolean by lazy {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
@@ -247,6 +248,7 @@ class PlayerActivity : AppCompatActivity() {
         videoTitleTextView = binding.playerView.findViewById(R.id.video_name)
         videoZoomButton = binding.playerView.findViewById(R.id.btn_video_zoom)
         playInBackgroundButton = binding.playerView.findViewById(R.id.btn_background)
+        loopModeButton = binding.playerView.findViewById(R.id.btn_loop_mode)
         extraControls = binding.playerView.findViewById(R.id.extra_controls)
 
         if (playerPreferences.controlButtonsPosition == ControlButtonsPosition.RIGHT) {
@@ -335,9 +337,10 @@ class PlayerActivity : AppCompatActivity() {
 
             mediaController?.run {
                 binding.playerView.player = this
-                binding.playerView.keepScreenOn = isPlaying
+                isMediaItemReady = currentMediaItem != null
                 toggleSystemBars(showBars = binding.playerView.isControllerFullyVisible)
                 videoTitleTextView.text = currentMediaItem?.mediaMetadata?.title
+                applyLoopMode(playerPreferences.loopMode)
                 if (playerPreferences.shouldUseVolumeBoost) {
                     try {
                         volumeManager.loudnessEnhancer = LoudnessEnhancer(getAudioSessionId())
@@ -345,15 +348,13 @@ class PlayerActivity : AppCompatActivity() {
                         e.printStackTrace()
                     }
                 }
+                updateKeepScreenOnFlag()
                 addListener(playbackStateListener)
                 startPlayback()
             }
             subtitleFileLauncherLaunchedForMediaItem = null
         }
         initializePlayerView()
-
-        steadyScreen.clear();
-        steadyScreen.attachView(binding.playerView);
     }
 
     override fun onStop() {
@@ -372,7 +373,6 @@ class PlayerActivity : AppCompatActivity() {
             mediaController?.pause()
         } else if (!playerPreferences.autoBackgroundPlay && !playInBackground) {
             mediaController?.run {
-                clearMediaItems()
                 stop()
             }
         }
@@ -380,7 +380,10 @@ class PlayerActivity : AppCompatActivity() {
             MediaController.releaseFuture(this)
             controllerFuture = null
         }
-        steadyScreen.destroy();
+
+        if (isPipActive) {
+            finishAndRemoveTask()
+        }
         super.onStop()
     }
 
@@ -410,6 +413,8 @@ class PlayerActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        isPipActive = isInPictureInPictureMode
         if (isInPictureInPictureMode) {
             binding.playerView.subtitleView?.setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION)
             playerUnlockControls.visibility = View.INVISIBLE
@@ -440,7 +445,6 @@ class PlayerActivity : AppCompatActivity() {
                 pipBroadcastReceiver = null
             }
         }
-        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -463,30 +467,30 @@ class PlayerActivity : AppCompatActivity() {
                 listOf(
                     createPipAction(
                         context = this@PlayerActivity,
-                        "skip to previous",
-                        coreUiR.drawable.ic_skip_prev,
-                        PIP_ACTION_PREVIOUS,
+                        title = "skip to previous",
+                        icon = coreUiR.drawable.ic_skip_prev,
+                        actionCode = PIP_ACTION_PREVIOUS,
                     ),
                     if (mediaController?.isPlaying == true) {
                         createPipAction(
                             context = this@PlayerActivity,
-                            "pause",
-                            coreUiR.drawable.ic_pause,
-                            PIP_ACTION_PAUSE,
+                            title = "pause",
+                            icon = coreUiR.drawable.ic_pause,
+                            actionCode = PIP_ACTION_PAUSE,
                         )
                     } else {
                         createPipAction(
                             context = this@PlayerActivity,
-                            "play",
-                            coreUiR.drawable.ic_play,
-                            PIP_ACTION_PLAY,
+                            title = "play",
+                            icon = coreUiR.drawable.ic_play,
+                            actionCode = PIP_ACTION_PLAY,
                         )
                     },
                     createPipAction(
                         context = this@PlayerActivity,
-                        "skip to next",
-                        coreUiR.drawable.ic_skip_next,
-                        PIP_ACTION_NEXT,
+                        title = "skip to next",
+                        icon = coreUiR.drawable.ic_skip_next,
+                        actionCode = PIP_ACTION_NEXT,
                     ),
                 ),
             )
@@ -652,16 +656,60 @@ class PlayerActivity : AppCompatActivity() {
         backButton.setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
+
+        updateLoopModeIcon(playerPreferences.loopMode)
+        loopModeButton.setOnClickListener {
+            val currentLoopMode = playerPreferences.loopMode
+            val nextLoopMode = when (currentLoopMode) {
+                LoopMode.OFF -> LoopMode.ONE
+                LoopMode.ONE -> LoopMode.ALL
+                LoopMode.ALL -> LoopMode.OFF
+            }
+
+            viewModel.setLoopMode(nextLoopMode)
+            updateLoopModeIcon(nextLoopMode)
+            applyLoopMode(nextLoopMode)
+            showPlayerInfo(
+                info = when (nextLoopMode) {
+                    LoopMode.OFF -> getString(coreUiR.string.loop_mode_off)
+                    LoopMode.ONE -> getString(coreUiR.string.loop_mode_one)
+                    LoopMode.ALL -> getString(coreUiR.string.loop_mode_all)
+                },
+            )
+        }
+    }
+
+    private fun updateLoopModeIcon(loopMode: LoopMode) {
+        val iconResId = when (loopMode) {
+            LoopMode.OFF -> coreUiR.drawable.ic_loop_off
+            LoopMode.ONE -> coreUiR.drawable.ic_loop_one
+            LoopMode.ALL -> coreUiR.drawable.ic_loop_all
+        }
+        loopModeButton.setImageResource(iconResId)
+    }
+
+    private fun applyLoopMode(loopMode: LoopMode) {
+        mediaController?.repeatMode = when (loopMode) {
+            LoopMode.OFF -> Player.REPEAT_MODE_OFF
+            LoopMode.ONE -> Player.REPEAT_MODE_ONE
+            LoopMode.ALL -> Player.REPEAT_MODE_ALL
+        }
     }
 
     private fun startPlayback() {
         val uri = intent.data ?: return
 
         // If the intent is not new and the current media item is not null, return
-        if (!isIntentNew && mediaController?.currentMediaItem != null) return
+        if (!isIntentNew && mediaController?.currentMediaItem != null) {
+            mediaController?.prepare()
+            return
+        }
 
         // If the current media item is not null and the current media item's uri is the same as the intent's data, return
-        if (mediaController?.currentMediaItem?.localConfiguration?.uri.toString() == uri.toString()) return
+        if (mediaController?.currentMediaItem?.localConfiguration?.uri.toString() == uri.toString()) {
+            mediaController?.prepare()
+            return
+        }
 
         isIntentNew = false
 
@@ -728,7 +776,7 @@ class PlayerActivity : AppCompatActivity() {
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
-            binding.playerView.keepScreenOn = isPlaying
+            updateKeepScreenOnFlag()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isPipSupported) {
                 updatePictureInPictureParams()
             }
@@ -1049,6 +1097,14 @@ class PlayerActivity : AppCompatActivity() {
         exoContentFrameLayout.scaleX = videoScale
         exoContentFrameLayout.scaleY = videoScale
         exoContentFrameLayout.requestLayout()
+    }
+
+    private fun updateKeepScreenOnFlag() {
+        if (mediaController?.isPlaying == true) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 
     private fun applyVideoZoom(videoZoom: VideoZoom, showInfo: Boolean) {
