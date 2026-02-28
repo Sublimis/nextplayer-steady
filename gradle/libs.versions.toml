@@ -33,6 +33,7 @@ reorderable = "3.0.0"
 room = "2.8.4"
 nextlib = "1.9.1-0.11.0"
 universalChardet = "2.5.0"
+steadyscreenlib = "2.0"
 
 
 [libraries]
@@ -87,6 +88,7 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 kotlin-metadata-jvm = { group = "org.jetbrains.kotlin", name = "kotlin-metadata-jvm", version.ref = "kotlin" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
+steadyscreenlib = { group = "io.github.sublimis.steadyscreen", name = "steadyscreen-lib", version.ref = "steadyscreenlib" }
 
 [plugins]
 aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutlibraries" }

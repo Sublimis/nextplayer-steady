@@ -47,6 +47,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import io.github.sublimis.steadyscreen.SteadyScreen
 
 val LocalUseMaterialYouControls = compositionLocalOf { false }
 
@@ -76,6 +77,8 @@ class PlayerActivity : ComponentActivity() {
     private val playbackStateListener: Player.Listener = playbackStateListener()
 
     private val subtitleFileSuspendLauncher = registerForSuspendActivityResult(OpenDocument())
+
+    protected val steadyScreen: SteadyScreen = SteadyScreen(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -147,6 +150,9 @@ class PlayerActivity : ComponentActivity() {
                 startPlayback()
             }
         }
+
+        steadyScreen.clear()
+        steadyScreen.attachView(window.decorView)
     }
 
     override fun onStop() {
@@ -170,6 +176,7 @@ class PlayerActivity : ComponentActivity() {
             MediaController.releaseFuture(this)
             controllerFuture = null
         }
+        steadyScreen.destroy();
         super.onStop()
     }
 

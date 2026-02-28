@@ -44,6 +44,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
 
         getByName("debug") {
@@ -133,6 +134,8 @@ dependencies {
     implementation(libs.accompanist.permissions)
 
     implementation(libs.github.anilbeesetti.nextlib.mediainfo)
+
+    implementation(libs.steadyscreenlib)
 
     testImplementation(libs.junit4)
     androidTestImplementation(platform(libs.androidx.compose.bom))
