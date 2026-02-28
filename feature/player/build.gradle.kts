@@ -74,6 +74,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.guava)
 
+    implementation(libs.steadyscreenlib)
+
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
