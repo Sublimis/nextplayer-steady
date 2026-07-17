@@ -37,7 +37,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,9 +56,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.anilbeesetti.nextplayer.core.domain.MediaHolder
 import dev.anilbeesetti.nextplayer.core.domain.SearchResults
-import dev.anilbeesetti.nextplayer.core.domain.asRootFolder
 import dev.anilbeesetti.nextplayer.core.model.ApplicationPreferences
 import dev.anilbeesetti.nextplayer.core.model.Folder
 import dev.anilbeesetti.nextplayer.core.model.MediaLayoutMode
@@ -78,7 +82,7 @@ fun SearchRoute(
     onFolderClick: (folderPath: String) -> Unit,
     onNavigateUp: () -> Unit,
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle(minActiveState = Lifecycle.State.RESUMED)
 
     SearchScreen(
         uiState = uiState,
@@ -201,7 +205,6 @@ internal fun SearchScreen(
                         contentPadding = updatedScaffoldPadding,
                         onFolderClick = onFolderClick,
                         onVideoClick = onVideoClick,
-                        onVideoLoaded = { onEvent(SearchUiEvent.AddToSync(it)) },
                     )
                 }
             }
@@ -364,8 +367,8 @@ private fun SearchResultsContent(
     contentPadding: PaddingValues = PaddingValues(),
     onFolderClick: (String) -> Unit,
     onVideoClick: (Uri) -> Unit,
-    onVideoLoaded: (Uri) -> Unit,
 ) {
+    var restoredFocusKey by rememberSaveable { mutableStateOf<String?>(null) }
     AnimatedVisibility(
         visible = isSearching,
         enter = fadeIn(),
@@ -408,11 +411,17 @@ private fun SearchResultsContent(
             }
         } else {
             MediaView(
-                rootFolder = searchResults.asRootFolder(),
+                recentlyPlayedVideo = null,
+                recentlyPlayedFolder = null,
+                mediaHolder = MediaHolder(
+                    videos = searchResults.videos,
+                    folders = searchResults.folders,
+                ),
                 preferences = preferences,
+                restoredFocusKey = restoredFocusKey,
+                onItemFocused = { restoredFocusKey = it },
                 onFolderClick = onFolderClick,
                 onVideoClick = onVideoClick,
-                onVideoLoaded = onVideoLoaded,
                 showHeaders = true,
                 contentPadding = contentPadding,
             )
@@ -442,13 +451,11 @@ private fun SearchScreenWithHistoryPreview() {
                         name = "Movies",
                         path = "/storage/Movies",
                         dateModified = System.currentTimeMillis(),
-                        mediaList = listOf(Video.sample, Video.sample),
                     ),
                     Folder(
                         name = "Downloads",
                         path = "/storage/Downloads",
                         dateModified = System.currentTimeMillis(),
-                        mediaList = listOf(Video.sample),
                     ),
                 ),
             ),

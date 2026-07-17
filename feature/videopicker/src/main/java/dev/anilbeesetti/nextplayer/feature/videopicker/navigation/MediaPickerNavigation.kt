@@ -1,50 +1,46 @@
 package dev.anilbeesetti.nextplayer.feature.videopicker.navigation
 
 import android.net.Uri
-import androidx.lifecycle.SavedStateHandle
-import androidx.navigation.NavController
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavOptions
-import androidx.navigation.compose.composable
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import dev.anilbeesetti.nextplayer.feature.videopicker.screens.mediapicker.MediaPickerRoute
+import dev.anilbeesetti.nextplayer.feature.videopicker.screens.mediapicker.MediaPickerViewModel
 import kotlinx.serialization.Serializable
 
-internal const val folderIdArg = "folderId"
-
-internal class FolderArgs(val folderId: String?) {
-    constructor(savedStateHandle: SavedStateHandle) :
-        this(savedStateHandle.get<String>(folderIdArg)?.let { Uri.decode(it) })
-}
+class FolderArgs(val folderId: String?)
 
 @Serializable
 data class MediaPickerRoute(
     val folderId: String? = null,
-)
+) : NavKey
 
-fun NavController.navigateToMediaPickerScreen(
-    folderId: String,
-    navOptions: NavOptions? = null,
-) {
-    val encodedFolderId = Uri.encode(folderId)
-    this.navigate(MediaPickerRoute(encodedFolderId), navOptions)
+fun NavBackStack<NavKey>.navigateToMediaPickerScreen(folderId: String) {
+    add(MediaPickerRoute(folderId))
 }
 
-fun NavGraphBuilder.mediaPickerScreen(
+fun EntryProviderScope<NavKey>.mediaPickerEntry(
     onNavigateUp: () -> Unit,
     onPlayVideo: (uri: Uri) -> Unit,
     onPlayVideos: (uris: List<Uri>) -> Unit,
     onFolderClick: (folderPath: String) -> Unit,
     onSettingsClick: () -> Unit,
     onSearchClick: () -> Unit,
+    onVaultClick: () -> Unit,
 ) {
-    composable<MediaPickerRoute> {
+    entry<MediaPickerRoute> { key ->
         MediaPickerRoute(
+            viewModel = hiltViewModel<MediaPickerViewModel, MediaPickerViewModel.Factory>(
+                creationCallback = { factory -> factory.create(FolderArgs(key.folderId)) },
+            ),
             onPlayVideo = onPlayVideo,
             onPlayVideos = onPlayVideos,
             onNavigateUp = onNavigateUp,
             onFolderClick = onFolderClick,
             onSettingsClick = onSettingsClick,
             onSearchClick = onSearchClick,
+            onVaultClick = onVaultClick,
         )
     }
 }

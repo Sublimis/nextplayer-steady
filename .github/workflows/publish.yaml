@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Get updated version name and version code
         run: |
@@ -33,19 +33,19 @@ jobs:
           distribution: temurin
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
         with:
           validate-wrappers: true
 
       - name: Decode keystore file
-        uses: timheuer/base64-to-file@v1
+        uses: timheuer/base64-to-file@v2
         id: keystore
         with:
           fileName: 'keystore.jks'
           encodedString: ${{ secrets.KEYSTORE }}
 
       - name: Decode Play API credentials file
-        uses: timheuer/base64-to-file@v1
+        uses: timheuer/base64-to-file@v2
         id: play_api_credentials
         with:
           fileName: 'play-api-credentials.json'
@@ -71,7 +71,7 @@ jobs:
 
       - name: Create Draft Release
         id: create_draft_release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

@@ -4,9 +4,11 @@ import dev.anilbeesetti.nextplayer.core.data.repository.fake.FakeMediaRepository
 import dev.anilbeesetti.nextplayer.core.data.repository.fake.FakePreferencesRepository
 import dev.anilbeesetti.nextplayer.core.model.Sort
 import dev.anilbeesetti.nextplayer.core.model.Video
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class GetSortedVideosUseCaseTest {
@@ -14,7 +16,7 @@ class GetSortedVideosUseCaseTest {
     private val mediaRepository = FakeMediaRepository()
     private val preferencesRepository = FakePreferencesRepository()
 
-    val getSortedVideosUseCase = GetSortedVideosUseCase(mediaRepository, preferencesRepository)
+    val getSortedVideosUseCase = GetSortedVideosUseCase(mediaRepository, preferencesRepository, Dispatchers.Unconfined)
 
     @Test
     fun testGetSortedVideosUseCase_whenSortByTitleAscending() = runTest {
@@ -118,6 +120,20 @@ class GetSortedVideosUseCaseTest {
         val sortedVideos = getSortedVideosUseCase().first()
 
         assertEquals(sortedVideos, testVideoItems.sortedByDescending { it.size })
+    }
+
+    @Test
+    fun testVideoComparator_whenTitlesContainMixedDigitScripts_doesNotCreateCycle() {
+        val comparator = Sort(Sort.By.TITLE, Sort.Order.ASCENDING).videoComparator()
+        val arabicNine = testVideoItems[0].copy(nameWithExtension = "٩.mp4")
+        val asciiZeroZero = testVideoItems[1].copy(nameWithExtension = "00.mp4")
+        val letterA = testVideoItems[2].copy(nameWithExtension = "a.mp4")
+
+        assertFalse(
+            comparator.compare(arabicNine, asciiZeroZero) < 0 &&
+                comparator.compare(asciiZeroZero, letterA) < 0 &&
+                comparator.compare(letterA, arabicNine) < 0,
+        )
     }
 }
 

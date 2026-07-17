@@ -26,16 +26,20 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.mozilla.universalchardet.UniversalDetector
 
-val VIDEO_COLLECTION_URI: Uri
-    get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
-    } else {
-        MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+val VIDEO_COLLECTION_URI: Uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+
+val Context.isTelevision: Boolean
+    get() {
+        val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager
+        if (uiModeManager?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION) return true
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
     }
 
 /**
@@ -106,6 +110,25 @@ fun Context.getPath(uri: Uri): String? {
         return uri.path
     }
     return null
+}
+
+/**
+ * Builds a document Uri pointing at the parent folder of [fileUri], suitable for seeding a
+ * document picker via [DocumentsContract.EXTRA_INITIAL_URI] so it opens at the file's folder.
+ *
+ * Only primary external storage is supported; returns null for other volumes or when the real
+ * path cannot be resolved (in which case the picker opens at its default location).
+ */
+fun Context.getInitialDirectoryUri(fileUri: Uri): Uri? {
+    val path = getPath(fileUri) ?: return null
+    val parent = File(path).parent ?: return null
+    val externalRoot = Environment.getExternalStorageDirectory().path
+    if (parent != externalRoot && !parent.startsWith("$externalRoot/")) return null
+    val relativePath = parent.removePrefix(externalRoot).trim('/')
+    return DocumentsContract.buildDocumentUri(
+        "com.android.externalstorage.documents",
+        "primary:$relativePath",
+    )
 }
 
 /**
@@ -196,7 +219,13 @@ fun Context.getMediaContentUri(uri: Uri): Uri? {
     return null
 }
 
-suspend fun Context.scanPaths(paths: List<String>): Boolean = suspendCoroutine { continuation ->
+suspend fun Context.scanPaths(paths: List<String>): Boolean = suspendCancellableCoroutine { continuation ->
+    if (paths.isEmpty()) {
+        continuation.resumeWith(Result.success(true))
+        return@suspendCancellableCoroutine
+    }
+    // scanFile invokes the callback once per path, so only resume after the last one.
+    val remaining = AtomicInteger(paths.size)
     try {
         MediaScannerConnection.scanFile(
             this@scanPaths,
@@ -204,7 +233,9 @@ suspend fun Context.scanPaths(paths: List<String>): Boolean = suspendCoroutine {
             arrayOf("video/*"),
         ) { path, uri ->
             Log.d("ScanPath", "scanPaths: path=$path, uri=$uri")
-            continuation.resumeWith(Result.success(true))
+            if (remaining.decrementAndGet() == 0) {
+                continuation.resumeWith(Result.success(true))
+            }
         }
     } catch (e: Exception) {
         continuation.resumeWith(Result.failure(e))
