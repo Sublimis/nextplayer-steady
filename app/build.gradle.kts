@@ -15,7 +15,7 @@ android {
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        applicationId = "dev.anilbeesetti.nextplayer"
+        applicationId = "com.sublimis.nextplayer"
         versionCode = 68
         versionName = "0.17.2"
     }

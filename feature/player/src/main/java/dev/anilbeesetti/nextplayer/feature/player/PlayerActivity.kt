@@ -79,7 +79,7 @@ class PlayerActivity : ComponentActivity() {
 
     private val subtitleFileSuspendLauncher = registerForSuspendActivityResult(OpenDocumentAtInitialUri())
 
-    protected val steadyScreen: SteadyScreen = SteadyScreen(this)
+    private val steadyScreen: SteadyScreen = SteadyScreen(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -184,7 +184,7 @@ class PlayerActivity : ComponentActivity() {
             MediaController.releaseFuture(this)
             controllerFuture = null
         }
-        steadyScreen.destroy();
+        steadyScreen.destroy()
         super.onStop()
     }
 
