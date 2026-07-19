@@ -15,9 +15,9 @@ android {
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        applicationId = "com.sublimis.nextplayer"
-        versionCode = 68
-        versionName = "0.17.2"
+        applicationId = "dev.anilbeesetti.nextplayer"
+        versionCode = 70
+        versionName = "0.17.3"
     }
 
     buildFeatures {
@@ -38,7 +38,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = signingConfigs.getByName("debug")
         }
 
         getByName("debug") {
@@ -140,9 +139,8 @@ dependencies {
 
     implementation(libs.github.anilbeesetti.nextlib.mediainfo)
 
-    implementation(libs.steadyscreenlib)
-
     testImplementation(libs.junit4)
+    testImplementation(libs.robolectric)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.test.ext)
     androidTestImplementation(libs.androidx.test.espresso.core)
