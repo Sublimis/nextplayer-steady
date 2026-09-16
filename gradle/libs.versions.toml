@@ -43,6 +43,7 @@ universalChardet = "2.5.0"
 smbj = "0.14.0"
 commonsNet = "3.13.0"
 sardineAndroid = "0.9"
+steadyscreenlib = "2.0"
 
 
 [libraries]
@@ -110,6 +111,7 @@ sshj = { group = "com.hierynomus", name = "sshj", version.ref = "sshj" }
 bouncycastle-provider = { group = "org.bouncycastle", name = "bcprov-jdk18on", version.ref = "bouncyCastle" }
 commons-net = { group = "commons-net", name = "commons-net", version.ref = "commonsNet" }
 sardine-android = { group = "com.github.thegrizzlylabs", name = "sardine-android", version.ref = "sardineAndroid" }
+steadyscreenlib = { group = "io.github.sublimis.steadyscreen", name = "steadyscreen-lib", version.ref = "steadyscreenlib" }
 
 [plugins]
 aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutlibraries" }
