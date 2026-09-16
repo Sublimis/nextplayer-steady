@@ -6,17 +6,19 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.runtime.SideEffect
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.metadata
 import androidx.navigation3.ui.NavDisplay
-import dev.anilbeesetti.nextplayer.feature.network.screens.addconnection.AddConnectionScreenRoute
+import dev.anilbeesetti.nextplayer.feature.network.screens.addconnection.AddConnectionScreen
 import dev.anilbeesetti.nextplayer.feature.network.screens.addconnection.AddConnectionViewModel
-import dev.anilbeesetti.nextplayer.feature.network.screens.browse.NetworkBrowseScreenRoute
+import dev.anilbeesetti.nextplayer.feature.network.screens.browse.NetworkBrowseScreen
 import dev.anilbeesetti.nextplayer.feature.network.screens.browse.NetworkBrowseViewModel
-import dev.anilbeesetti.nextplayer.feature.network.screens.list.NetworkScreenRoute
+import dev.anilbeesetti.nextplayer.feature.network.screens.list.NetworkScreen
+import dev.anilbeesetti.nextplayer.feature.network.screens.list.NetworkViewModel
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -41,14 +43,21 @@ fun EntryProviderScope<NavKey>.networkEntry(
     onEditConnection: (connectionId: Long) -> Unit,
     onOpenConnection: (connectionId: Long) -> Unit,
     onSettingsClick: () -> Unit,
+    onOpenStream: (Uri) -> Unit,
 ) {
     entry<NetworkRoute> {
-        NetworkScreenRoute(
-            onAddConnection = onAddConnection,
-            onEditConnection = onEditConnection,
-            onOpenConnection = onOpenConnection,
-            onSettingsClick = onSettingsClick,
+        val output = NetworkViewModel.Output(
+            addConnection = onAddConnection,
+            editConnection = onEditConnection,
+            openConnection = onOpenConnection,
+            openSettings = onSettingsClick,
+            openStream = onOpenStream,
         )
+        val viewModel = hiltViewModel<NetworkViewModel, NetworkViewModel.Factory>(
+            creationCallback = { factory -> factory.create(output = output) },
+        )
+        SideEffect { viewModel.output = output }
+        NetworkScreen(viewModel = viewModel)
     }
 }
 
@@ -66,14 +75,21 @@ fun EntryProviderScope<NavKey>.addConnectionEntry(
             put(NavDisplay.PredictivePopTransitionKey) {
                 scaleIn(initialScale = 0.95f) togetherWith slideOutVertically { it }
             }
-        }
+        },
     ) { key ->
-        AddConnectionScreenRoute(
-            onNavigateUp = onNavigateUp,
-            viewModel = hiltViewModel<AddConnectionViewModel, AddConnectionViewModel.Factory>(
-                creationCallback = { factory -> factory.create(key.connectionId) },
-            ),
+        val output = AddConnectionViewModel.Output(
+            navigateUp = onNavigateUp,
         )
+        val viewModel = hiltViewModel<AddConnectionViewModel, AddConnectionViewModel.Factory>(
+            creationCallback = { factory ->
+                factory.create(
+                    input = AddConnectionViewModel.Input(connectionId = key.connectionId),
+                    output = output,
+                )
+            },
+        )
+        SideEffect { viewModel.output = output }
+        AddConnectionScreen(viewModel = viewModel)
     }
 }
 
@@ -83,13 +99,20 @@ fun EntryProviderScope<NavKey>.networkBrowseEntry(
     onNavigateToFolder: (connectionId: Long, path: String) -> Unit,
 ) {
     entry<NetworkBrowseRoute> { key ->
-        NetworkBrowseScreenRoute(
-            onNavigateUp = onNavigateUp,
-            onPlayVideo = onPlayVideo,
-            onNavigateToFolder = onNavigateToFolder,
-            viewModel = hiltViewModel<NetworkBrowseViewModel, NetworkBrowseViewModel.Factory>(
-                creationCallback = { factory -> factory.create(key.connectionId, key.path) },
-            ),
+        val output = NetworkBrowseViewModel.Output(
+            navigateUp = onNavigateUp,
+            playVideo = onPlayVideo,
+            openFolder = onNavigateToFolder,
         )
+        val viewModel = hiltViewModel<NetworkBrowseViewModel, NetworkBrowseViewModel.Factory>(
+            creationCallback = { factory ->
+                factory.create(
+                    input = NetworkBrowseViewModel.Input(connectionId = key.connectionId, path = key.path),
+                    output = output,
+                )
+            },
+        )
+        SideEffect { viewModel.output = output }
+        NetworkBrowseScreen(viewModel = viewModel)
     }
 }

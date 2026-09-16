@@ -1,27 +1,64 @@
 package dev.anilbeesetti.nextplayer.feature.playlist.screens.detail
 
+import android.content.Context
 import android.net.Uri
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.requestFocus
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.platform.app.InstrumentationRegistry
+import dev.anilbeesetti.nextplayer.core.common.extensions.isTelevision
 import dev.anilbeesetti.nextplayer.core.model.Playlist
 import dev.anilbeesetti.nextplayer.core.model.PlaylistItem
+import dev.anilbeesetti.nextplayer.core.model.PlaylistType
 import dev.anilbeesetti.nextplayer.core.model.Video
 import dev.anilbeesetti.nextplayer.core.ui.base.ActionState
 import dev.anilbeesetti.nextplayer.core.ui.base.DataState
 import dev.anilbeesetti.nextplayer.core.ui.theme.NextPlayerTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 
 class PlaylistDetailScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun tvFabUpReturnsToTheVideoInsteadOfSearch() {
+        assumeTrue(ApplicationProvider.getApplicationContext<Context>().isTelevision)
+        setContent(playlist(item("content://one", "One.mp4", "/Movies", 0)), isTv = true)
+        composeRule.onNodeWithContentDescription("Play").requestFocus()
+        composeRule.onRoot().performKeyInput { pressKey(Key.DirectionUp) }
+        composeRule.onNodeWithText("One").assertIsFocused()
+    }
+
+    @Test
+    fun tvFabUpRestoresThePreviouslyFocusedVideo() {
+        assumeTrue(ApplicationProvider.getApplicationContext<Context>().isTelevision)
+        setContent(
+            playlist(
+                item("content://one", "One.mp4", "/Movies", 0),
+                item("content://two", "Two.mp4", "/Movies", 1),
+            ),
+            isTv = true,
+        )
+        composeRule.onNodeWithText("Two").requestFocus()
+        composeRule.onNodeWithContentDescription("Play").requestFocus()
+        composeRule.onRoot().performKeyInput { pressKey(Key.DirectionUp) }
+        composeRule.onNodeWithText("Two").assertIsFocused()
+    }
 
     @Test
     fun playFabEmitsOrderedQueueStartingFromFirstVideo() {
@@ -39,10 +76,7 @@ class PlaylistDetailScreenTest {
         composeRule.onNodeWithContentDescription("Play").performClick()
 
         assertEquals(
-            PlaylistDetailUiAction.OnPlayVideos(
-                uris = listOf("content://two", "content://one").map(Uri::parse),
-                startUri = Uri.parse("content://two"),
-            ),
+            PlaylistDetailUiAction.OnPlay(Uri.parse("content://two")),
             actions.single(),
         )
     }
@@ -59,10 +93,7 @@ class PlaylistDetailScreenTest {
         composeRule.onNodeWithContentDescription("Play").performClick()
 
         assertEquals(
-            PlaylistDetailUiAction.OnPlayVideos(
-                uris = listOf("content://one", "content://two").map(Uri::parse),
-                startUri = Uri.parse("content://two"),
-            ),
+            PlaylistDetailUiAction.OnPlay(Uri.parse("content://two")),
             actions.single(),
         )
     }
@@ -135,10 +166,7 @@ class PlaylistDetailScreenTest {
         composeRule.onNodeWithText("Two").performClick()
 
         assertEquals(
-            PlaylistDetailUiAction.OnPlayVideos(
-                uris = listOf("content://one", "content://two").map(Uri::parse),
-                startUri = Uri.parse("content://two"),
-            ),
+            PlaylistDetailUiAction.OnPlay(Uri.parse("content://two")),
             actions.single(),
         )
     }
@@ -228,10 +256,7 @@ class PlaylistDetailScreenTest {
 
         composeRule.onNodeWithText("One").performClick()
         assertEquals(
-            PlaylistDetailUiAction.OnPlayVideos(
-                uris = listOf("content://one", "content://two").map(Uri::parse),
-                startUri = Uri.parse("content://one"),
-            ),
+            PlaylistDetailUiAction.OnPlay(Uri.parse("content://one")),
             actions.single(),
         )
     }
@@ -246,10 +271,12 @@ class PlaylistDetailScreenTest {
         showRemoveDialogFor: PlaylistItem? = null,
         onAction: (PlaylistDetailUiAction) -> Unit = {},
     ) {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        assumeTrue("Requires ${if (isTv) "TV" else "phone"} device", context.isTelevision == isTv)
         composeRule.setContent {
             NextPlayerTheme {
-                PlaylistDetailScreen(
-                    uiState = PlaylistDetailUiState(
+                PlaylistDetailScreenContent(
+                    state = PlaylistDetailUiState(
                         playlistDataState = DataState.Success(playlist),
                         updateActionState = updateActionState,
                         isSearching = isSearching,
@@ -257,7 +284,6 @@ class PlaylistDetailScreenTest {
                         isReordering = isReordering,
                         showRemoveDialogFor = showRemoveDialogFor,
                     ),
-                    isTv = isTv,
                     onAction = onAction,
                 )
             }
@@ -268,7 +294,10 @@ class PlaylistDetailScreenTest {
 private fun playlist(vararg items: PlaylistItem) = Playlist(
     id = 7,
     name = "Movies",
+    type = PlaylistType.LOCAL,
+    source = null,
     items = items.toList(),
+    lastRefreshedAt = null,
 )
 
 private fun item(
@@ -279,6 +308,11 @@ private fun item(
     lastPlayedAt: Long? = null,
 ) = PlaylistItem(
     position = position,
+    uri = uri,
+    title = null,
+    tvgLogo = null,
+    duration = -1,
+    groupTitle = null,
     lastPlayedAt = lastPlayedAt,
     video = Video(
         id = position.toLong(),

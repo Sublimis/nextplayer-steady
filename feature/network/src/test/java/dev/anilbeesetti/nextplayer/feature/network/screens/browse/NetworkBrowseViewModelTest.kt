@@ -3,7 +3,6 @@ package dev.anilbeesetti.nextplayer.feature.network.screens.browse
 import dev.anilbeesetti.nextplayer.core.data.repository.NetworkConnectionRepository
 import dev.anilbeesetti.nextplayer.core.media.network.NetworkClient
 import dev.anilbeesetti.nextplayer.core.media.network.NetworkClientFactory
-import dev.anilbeesetti.nextplayer.core.media.network.proxy.NetworkStreamingProxy
 import dev.anilbeesetti.nextplayer.core.media.network.sftp.HostKeyMismatch
 import dev.anilbeesetti.nextplayer.core.model.NetworkConnection
 import dev.anilbeesetti.nextplayer.core.model.NetworkFile
@@ -46,7 +45,7 @@ class NetworkBrowseViewModelTest {
                         presentedFingerprint = "SHA256:presented",
                     ),
                 ),
-                viewModel.uiState.value.error,
+                viewModel.state.value.error,
             )
         }
 
@@ -59,18 +58,17 @@ class NetworkBrowseViewModelTest {
 
             advanceUntilIdle()
 
-            assertEquals("Server unavailable", viewModel.uiState.value.error?.message)
-            assertNull(viewModel.uiState.value.error?.hostKeyMismatch)
+            assertEquals("Server unavailable", viewModel.state.value.error?.message)
+            assertNull(viewModel.state.value.error?.hostKeyMismatch)
         }
 
     private fun viewModel(connectResult: Result<Unit>): NetworkBrowseViewModel {
         val client = FakeNetworkClient(connectResult)
         val factory = NetworkClientFactory { client }
         return NetworkBrowseViewModel(
-            connectionId = 7,
-            path = null,
+            input = NetworkBrowseViewModel.Input(connectionId = 7, path = null),
+            output = NetworkBrowseViewModel.Output(navigateUp = {}, playVideo = {}, openFolder = { _, _ -> }),
             repository = FakeRepository(connection()),
-            streamingProxy = NetworkStreamingProxy(factory),
             clientFactory = factory,
         )
     }

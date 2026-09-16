@@ -1,6 +1,5 @@
 package dev.anilbeesetti.nextplayer.feature.network.screens.browse
 
-import android.net.Uri
 import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -36,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
@@ -48,48 +45,36 @@ import dev.anilbeesetti.nextplayer.core.model.NetworkFile
 import dev.anilbeesetti.nextplayer.core.ui.R
 import dev.anilbeesetti.nextplayer.core.ui.components.NextSegmentedListItem
 import dev.anilbeesetti.nextplayer.core.ui.components.NextTopAppBar
-import dev.anilbeesetti.nextplayer.core.ui.components.rememberTvListFocusRequester
 import dev.anilbeesetti.nextplayer.core.ui.components.tvFocusRing
 import dev.anilbeesetti.nextplayer.core.ui.components.tvListFocus
 import dev.anilbeesetti.nextplayer.core.ui.designsystem.NextIcons
-import dev.anilbeesetti.nextplayer.feature.network.ObserveAsEvents
+import dev.anilbeesetti.nextplayer.core.ui.extensions.copy
 import java.util.Date
 
 @Composable
-fun NetworkBrowseScreenRoute(
-    onNavigateUp: () -> Unit,
-    onPlayVideo: (Uri) -> Unit,
-    onNavigateToFolder: (connectionId: Long, path: String) -> Unit,
+fun NetworkBrowseScreen(
     viewModel: NetworkBrowseViewModel,
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
-    ObserveAsEvents(viewModel.playEvents) { uri -> onPlayVideo(uri) }
-
-    NetworkBrowseScreen(
-        uiState = uiState,
-        onBack = onNavigateUp,
-        onFolderClick = { file -> onNavigateToFolder(viewModel.connectionId, file.path) },
-        onVideoClick = viewModel::playVideo,
-        onRetry = viewModel::retry,
+    NetworkBrowseScreenContent(
+        state = state,
+        onAction = viewModel::onAction,
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun NetworkBrowseScreen(
-    uiState: NetworkBrowseUiState,
-    onBack: () -> Unit,
-    onFolderClick: (NetworkFile) -> Unit,
-    onVideoClick: (NetworkFile) -> Unit,
-    onRetry: () -> Unit,
+internal fun NetworkBrowseScreenContent(
+    state: NetworkBrowseUiState,
+    onAction: (NetworkBrowseAction) -> Unit,
 ) {
     Scaffold(
         topBar = {
             NextTopAppBar(
-                title = uiState.title,
+                title = state.title,
                 navigationIcon = {
-                    FilledTonalIconButton(onClick = onBack, modifier = Modifier.tvFocusRing()) {
+                    FilledTonalIconButton(onClick = { onAction(NetworkBrowseAction.NavigateUp) }, modifier = Modifier.tvFocusRing()) {
                         Icon(
                             imageVector = NextIcons.ArrowBack,
                             contentDescription = stringResource(R.string.navigate_up),
@@ -99,18 +84,18 @@ internal fun NetworkBrowseScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ) { padding ->
+    ) { scaffoldPadding ->
         when {
-            uiState.isLoading -> {
-                Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+            state.isLoading -> {
+                Box(Modifier.fillMaxSize().padding(scaffoldPadding), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
 
-            uiState.error != null -> {
-                val error = uiState.error
+            state.error != null -> {
+                val error = state.error
                 Column(
-                    modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 32.dp),
+                    modifier = Modifier.fillMaxSize().padding(scaffoldPadding).padding(horizontal = 32.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
@@ -158,20 +143,19 @@ internal fun NetworkBrowseScreen(
                         }
                     }
                     Spacer(Modifier.size(16.dp))
-                    Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
+                    Button(onClick = { onAction(NetworkBrowseAction.Retry) }) { Text(stringResource(R.string.retry)) }
                 }
             }
 
             else -> {
                 val containerModifier = Modifier
                     .fillMaxSize()
-                    .padding(top = padding.calculateTopPadding())
-                    .padding(start = padding.calculateStartPadding(LocalLayoutDirection.current) + 2.dp)
+                    .padding(scaffoldPadding.copy(bottom = 0.dp))
                     .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                     .background(MaterialTheme.colorScheme.background)
 
                 Box(modifier = containerModifier) {
-                    if (uiState.files.isEmpty()) {
+                    if (state.files.isEmpty()) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Text(
                                 text = stringResource(R.string.empty_folder),
@@ -182,25 +166,25 @@ internal fun NetworkBrowseScreen(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .tvListFocus(rememberTvListFocusRequester()),
+                                .tvListFocus(),
                             contentPadding = PaddingValues(
                                 start = 8.dp,
                                 end = 8.dp,
                                 top = 8.dp,
-                                bottom = padding.calculateBottomPadding() + 16.dp,
+                                bottom = scaffoldPadding.calculateBottomPadding() + 16.dp,
                             ),
                             verticalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
                             itemsIndexed(
-                                items = uiState.files,
+                                items = state.files,
                                 key = { _, file -> file.path },
                             ) { index, file ->
                                 NetworkFileItem(
                                     file = file,
                                     isFirstItem = index == 0,
-                                    isLastItem = index == uiState.files.lastIndex,
+                                    isLastItem = index == state.files.lastIndex,
                                     onClick = {
-                                        if (file.isDirectory) onFolderClick(file) else onVideoClick(file)
+                                        if (file.isDirectory) onAction(NetworkBrowseAction.OpenFolder(file)) else onAction(NetworkBrowseAction.PlayVideo(file))
                                     },
                                 )
                             }

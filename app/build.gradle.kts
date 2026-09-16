@@ -15,9 +15,10 @@ android {
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        applicationId = "com.sublimis.nextplayer"
-        versionCode = 72
-        versionName = "0.17.5"
+        applicationId = "dev.anilbeesetti.nextplayer"
+        versionCode = 74
+        versionName = "0.18.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildFeatures {
@@ -38,7 +39,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = signingConfigs.getByName("debug")
         }
 
         getByName("debug") {
@@ -118,7 +118,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material3.adaptive)
-    implementation(libs.androidx.compose.material3.adaptive.navigationsuite)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
@@ -129,6 +128,7 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
 
     implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     // Hilt
     implementation(libs.hilt.android)
@@ -141,12 +141,15 @@ dependencies {
 
     implementation(libs.github.anilbeesetti.nextlib.mediainfo)
 
-    implementation(libs.steadyscreenlib)
-
     testImplementation(libs.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
+    androidTestImplementation(project(":core:domain"))
+    androidTestImplementation(libs.androidx.media3.session)
+    androidTestImplementation(libs.github.anilbeesetti.nextlib.media3ext)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.test.ext)
+    androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test)
     debugImplementation(libs.androidx.compose.ui.tooling)
