@@ -100,10 +100,14 @@ private fun PlayerPreferencesScreenContent(
                 )
                 PreferenceSlider(
                     title = stringResource(R.string.controller_timeout),
-                    description = stringResource(R.string.seconds, state.preferences.controllerAutoHideTimeout),
+                    description = if (state.preferences.controllerAutoHideTimeout == 0) {
+                        stringResource(R.string.off)
+                    } else {
+                        stringResource(R.string.seconds, state.preferences.controllerAutoHideTimeout)
+                    },
                     icon = NextIcons.Timer,
                     value = state.preferences.controllerAutoHideTimeout.toFloat(),
-                    valueRange = 1.0f..60.0f,
+                    valueRange = 0.0f..600.0f,
                     onValueChange = { onAction(PlayerPreferencesUiEvent.UpdateControlAutoHideTimeout(it.toInt())) },
                     onReset = { onAction(PlayerPreferencesUiEvent.UpdateControlAutoHideTimeout(PlayerPreferences.DEFAULT_CONTROLLER_AUTO_HIDE_TIMEOUT)) },
                     isLastItem = true,
@@ -154,6 +158,13 @@ private fun PlayerPreferencesScreenContent(
                     icon = NextIcons.Player,
                     isChecked = state.preferences.autoplay,
                     onClick = { onAction(PlayerPreferencesUiEvent.ToggleAutoplay) },
+                )
+                PreferenceSwitch(
+                    title = stringResource(id = R.string.tunneled_playback),
+                    description = stringResource(id = R.string.tunneled_playback_description),
+                    icon = NextIcons.Decoder,
+                    isChecked = state.preferences.enableTunneledPlayback,
+                    onClick = { onAction(PlayerPreferencesUiEvent.ToggleTunneledPlayback) },
                 )
                 if (LocalContext.current.isPipFeatureSupported) {
                     PreferenceSwitch(

@@ -10,6 +10,8 @@ data class ApplicationPreferences(
     val useHighContrastDarkTheme: Boolean = false,
     val useDynamicColors: Boolean = true,
     val markLastPlayedMedia: Boolean = true,
+    val isHistoryPaused: Boolean = false,
+    val includeNetworkWatchHistory: Boolean = true,
     val excludeFolders: List<String> = emptyList(),
     val mediaViewMode: MediaViewMode = MediaViewMode.FOLDERS,
     val mediaLayoutMode: MediaLayoutMode = MediaLayoutMode.LIST,
@@ -23,6 +25,8 @@ data class ApplicationPreferences(
     val showSizeField: Boolean = false,
     val showThumbnailField: Boolean = true,
     val showPlayedProgress: Boolean = true,
+
+    val newVideoThresholdDays: Int = 7,
 
     // Thumbnail generation
     val thumbnailGenerationStrategy: ThumbnailGenerationStrategy = ThumbnailGenerationStrategy.FRAME_AT_PERCENTAGE,

@@ -461,8 +461,8 @@
     <string name="choose_playlist_type">创建播放列表</string>
     <string name="decoder_mode_auto">自动</string>
     <string name="no_supported_decoder">没有支持此媒体的解码器可用</string>
-    <string name="audio_decoder_mode_not_supported">不支持 %1$s 音频解码器</string>
-    <string name="video_decoder_mode_not_supported">不支持 %1$s 视频解码器</string>
+    <string name="audio_decoder_mode_not_supported">不支持%1$s音频解码器</string>
+    <string name="video_decoder_mode_not_supported">不支持%1$s视频解码器</string>
     <string name="decoder_app_software_description">自带的 FFmpeg 软件解码器</string>
     <string name="decoder_system_software_description">仅 Android 软件 MediaCodec 解码器</string>
     <string name="decoder_hardware_description">仅硬件 MediaCodec 解码器</string>
@@ -497,4 +497,29 @@
     <string name="clear_history_confirmation">从历史移除所有观看过的视频吗？</string>
     <string name="trash_empty_description">您移动到回收站的视频会在此显示。您可以将其恢复或永久删除。</string>
     <string name="trash_empty_title">回收站为空</string>
+    <string name="open_audio">打开本地音频</string>
+    <string name="error_opening_audio">无法打开此音频文件</string>
+    <string name="show_chapters">显示章节</string>
+    <string name="chapters">章节</string>
+    <string name="chapter_number">第 %1$d 章</string>
+    <string name="new_label">新</string>
+    <plurals name="new_videos_count">
+        <item quantity="other">%1$d 个新视频</item>
+    </plurals>
+    <string name="mark_new_media">为新添加的媒体标上“新”标签</string>
+    <plurals name="days_count">
+        <item quantity="other">%1$d 天</item>
+    </plurals>
+    <string name="turn_off_watch_history">关闭观看历史</string>
+    <string name="turn_on_watch_history">开启观看历史</string>
+    <string name="turn_off_watch_history_confirmation">关闭观看历史会清除观看历史并停止记录看过的视频</string>
+    <string name="turn_on_watch_history_confirmation">开始在观看历史中记录看过的视频吗？</string>
+    <string name="watch_history_turned_off">已关闭观看历史</string>
+    <string name="no_watch_history">没有观看历史</string>
+    <string name="watch_history">观看历史</string>
+    <string name="watch_history_desc">记录看过的视频</string>
+    <string name="network_watch_history">网络观看历史</string>
+    <string name="network_watch_history_desc">在观看历史中包括通过网络播放的视频</string>
+    <string name="tunneled_playback">隧道式播放</string>
+    <string name="tunneled_playback_description">设备和媒体支持时使用隧道式播放。可能改善 Android 电视上杜比视界和 HDR10+ 的播放效果。仅应用于新的播放会话。</string>
 </resources>

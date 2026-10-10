@@ -513,4 +513,33 @@
     <string name="use_sftp">Usar SFTP</string>
     <string name="settings_description">Preferencias de la aplicación</string>
     <string name="more">Más</string>
+    <string name="open_audio">Abrir audio local</string>
+    <string name="error_opening_audio">No se puede abrir este archivo de audio</string>
+    <string name="chapters">Capítulos</string>
+    <string name="chapter_number">Capítulo %1$d</string>
+    <string name="show_chapters">Mostrar capítulos</string>
+    <string name="new_label">NUEVO</string>
+    <plurals name="new_videos_count">
+        <item quantity="one">%1$d vídeo nuevo</item>
+        <item quantity="many">%1$d vídeos nuevos</item>
+        <item quantity="other">%1$d vídeos nuevos</item>
+    </plurals>
+    <string name="mark_new_media">Marcar el contenido recién añadido como nuevo</string>
+    <plurals name="days_count">
+        <item quantity="one">%1$d día</item>
+        <item quantity="many">%1$d días</item>
+        <item quantity="other">%1$d días</item>
+    </plurals>
+    <string name="tunneled_playback">Reproducción tunelizada</string>
+    <string name="tunneled_playback_description">Usar reproducción tunelizada cuando el dispositivo y el contenido lo admitan. Puede mejorar la reproducción de Dolby Vision y HDR10+ en Android TV. Se aplica a las nuevas reproducciones.</string>
+    <string name="turn_off_watch_history">Desactivar el historial de reproducciones</string>
+    <string name="turn_on_watch_history">Activar el historial de reproducciones</string>
+    <string name="turn_off_watch_history_confirmation">Desactivar el historial de reproducciones borrará tu historial actual y dejará de registrar los videos que veas.</string>
+    <string name="turn_on_watch_history_confirmation">¿Quieres empezar a registrar los videos que ves en tu historial de reproducciones?</string>
+    <string name="watch_history_turned_off">El historial de reproducciones está desactivado</string>
+    <string name="no_watch_history">Sin historial de reproducciones</string>
+    <string name="watch_history">Historial de reproducciones</string>
+    <string name="watch_history_desc">Guardar un registro de los videos que ves</string>
+    <string name="network_watch_history">Historial de reproducciones en red</string>
+    <string name="network_watch_history_desc">Incluir en el historial los videos reproducidos en red.</string>
 </resources>

@@ -505,4 +505,31 @@
     <string name="more">Περισσότερα</string>
     <string name="trash_empty_title">Ο κάδος είναι άδειος</string>
     <string name="trash_empty_description">Τα βίντεο που μετακινείτε στον κάδο απορριμμάτων θα εμφανίζονται εδώ. Μπορείτε να τα επαναφέρετε ή να τα διαγράψετε οριστικά.</string>
+    <string name="chapters">Κεφάλαια</string>
+    <string name="chapter_number">Κεφάλαιο %1$d</string>
+    <string name="show_chapters">Εμφάνιση κεφαλαίων</string>
+    <string name="open_audio">Άνοιγμα τοπικού ήχου</string>
+    <string name="error_opening_audio">Αδυναμία ανοίγματος αυτού του αρχείου ήχου</string>
+    <string name="mark_new_media">Επισήμανση των νέων μέσων που προστέθηκαν ως νέα</string>
+    <plurals name="days_count">
+        <item quantity="one">%1$d ημέρα</item>
+        <item quantity="other">%1$d ημέρες</item>
+    </plurals>
+    <string name="new_label">ΝΕΑ</string>
+    <plurals name="new_videos_count">
+        <item quantity="one">%1$d νέο βίντεο</item>
+        <item quantity="other">%1$d νέα βίντεο</item>
+    </plurals>
+    <string name="tunneled_playback">Αναπαραγωγή τούνελ</string>
+    <string name="tunneled_playback_description">Χρησιμοποιήστε την αναπαραγωγή τούνελ (tunneled playback) όταν υποστηρίζεται από τη συσκευή και το περιεχόμενο πολυμέσων. Μπορεί να βελτιώσει την αναπαραγωγή Dolby Vision και HDR10+ σε τηλεοράσεις Android. Ισχύει για νέες περιόδους λειτουργίας αναπαραγωγής.</string>
+    <string name="turn_off_watch_history">Απενεργοποίηση ιστορικού</string>
+    <string name="turn_on_watch_history">Ενεργοποίηση ιστορικού</string>
+    <string name="turn_off_watch_history_confirmation">Η απενεργοποίηση του ιστορικού παρακολούθησης θα διαγράψει το ιστορικό παρακολούθησης σας και θα σταματήσει την καταγραφή των βίντεο που παρακολουθείτε.</string>
+    <string name="turn_on_watch_history_confirmation">Να ξεκινήσει η καταγραφή των βίντεο που παρακολουθείτε στο ιστορικό προβολής σας;</string>
+    <string name="watch_history_turned_off">Το ιστορικό είναι απενεργοποιημένο</string>
+    <string name="no_watch_history">Δεν υπάρχει ιστορικό</string>
+    <string name="watch_history">Ιστορικό παρακολούθησης</string>
+    <string name="watch_history_desc">Τήρηση αρχείου των βίντεο που παρακολουθείτε</string>
+    <string name="network_watch_history">Ιστορικό δικτύου</string>
+    <string name="network_watch_history_desc">Συμπερίληψη βίντεο που αναπαράγονται μέσω δικτύου στο ιστορικό παρακολούθησης.</string>
 </resources>

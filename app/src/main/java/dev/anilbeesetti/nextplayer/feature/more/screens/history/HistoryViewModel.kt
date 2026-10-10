@@ -1,10 +1,6 @@
 package dev.anilbeesetti.nextplayer.feature.more.screens.history
 
 import androidx.lifecycle.viewModelScope
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.anilbeesetti.nextplayer.core.data.repository.MediaRepository
 import dev.anilbeesetti.nextplayer.core.data.repository.PreferencesRepository
 import dev.anilbeesetti.nextplayer.core.model.ApplicationPreferences
@@ -17,23 +13,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
-@HiltViewModel(assistedFactory = HistoryViewModel.Factory::class)
-class HistoryViewModel @AssistedInject constructor(
+@KoinViewModel
+class HistoryViewModel(
     private val mediaRepository: MediaRepository,
-    preferencesRepository: PreferencesRepository,
-    @Assisted internal var output: Output,
+    private val preferencesRepository: PreferencesRepository,
+    @InjectedParam internal var output: Output,
 ) : MviViewModel<HistoryUiState, HistoryAction>() {
 
     data class Output(
         val navigateUp: () -> Unit,
         val playVideo: (String) -> Unit,
     )
-
-    @AssistedFactory
-    interface Factory {
-        fun create(output: Output): HistoryViewModel
-    }
 
     private val stateInternal = MutableStateFlow(HistoryUiState())
     override val state: StateFlow<HistoryUiState> = stateInternal.asStateFlow()
@@ -61,6 +54,12 @@ class HistoryViewModel @AssistedInject constructor(
             is HistoryAction.PlayVideo -> output.playVideo(action.uri)
 
             is HistoryAction.ClearHistory -> clearHistory()
+            is HistoryAction.SetHistoryEnabled -> viewModelScope.launch {
+                preferencesRepository.updateApplicationPreferences {
+                    it.copy(isHistoryPaused = !action.enabled)
+                }
+                if (!action.enabled) mediaRepository.clearPlaybackHistory()
+            }
         }
     }
 
@@ -79,4 +78,5 @@ sealed interface HistoryAction {
     data class PlayVideo(val uri: String) : HistoryAction
 
     data object ClearHistory : HistoryAction
+    data class SetHistoryEnabled(val enabled: Boolean) : HistoryAction
 }

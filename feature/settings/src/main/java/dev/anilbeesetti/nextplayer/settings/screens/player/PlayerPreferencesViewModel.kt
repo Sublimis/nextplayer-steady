@@ -2,10 +2,6 @@ package dev.anilbeesetti.nextplayer.settings.screens.player
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.viewModelScope
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.anilbeesetti.nextplayer.core.common.extensions.round
 import dev.anilbeesetti.nextplayer.core.data.repository.PreferencesRepository
 import dev.anilbeesetti.nextplayer.core.model.ControlButtonsPosition
@@ -18,21 +14,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
-@HiltViewModel(assistedFactory = PlayerPreferencesViewModel.Factory::class)
-class PlayerPreferencesViewModel @AssistedInject constructor(
+@KoinViewModel
+class PlayerPreferencesViewModel(
     private val preferencesRepository: PreferencesRepository,
-    @Assisted internal var output: Output,
+    @InjectedParam internal var output: Output,
 ) : MviViewModel<PlayerPreferencesUiState, PlayerPreferencesUiEvent>() {
 
     data class Output(
         val navigateUp: () -> Unit,
     )
-
-    @AssistedFactory
-    interface Factory {
-        fun create(output: Output): PlayerPreferencesViewModel
-    }
 
     private val stateInternal = MutableStateFlow(
         PlayerPreferencesUiState(
@@ -56,6 +49,7 @@ class PlayerPreferencesViewModel @AssistedInject constructor(
             is PlayerPreferencesUiEvent.ShowDialog -> showDialog(action.value)
             is PlayerPreferencesUiEvent.UpdatePlaybackResume -> updatePlaybackResume(action.resume)
             is PlayerPreferencesUiEvent.ToggleAutoplay -> toggleAutoplay()
+            is PlayerPreferencesUiEvent.ToggleTunneledPlayback -> toggleTunneledPlayback()
             is PlayerPreferencesUiEvent.ToggleAutoPip -> toggleAutoPip()
             is PlayerPreferencesUiEvent.ToggleAutoBackgroundPlay -> toggleAutoBackgroundPlay()
             is PlayerPreferencesUiEvent.ToggleRememberBrightnessLevel -> toggleRememberBrightnessLevel()
@@ -96,6 +90,14 @@ class PlayerPreferencesViewModel @AssistedInject constructor(
         viewModelScope.launch {
             preferencesRepository.updatePlayerPreferences {
                 it.copy(autoPip = !it.autoPip)
+            }
+        }
+    }
+
+    private fun toggleTunneledPlayback() {
+        viewModelScope.launch {
+            preferencesRepository.updatePlayerPreferences {
+                it.copy(enableTunneledPlayback = !it.enableTunneledPlayback)
             }
         }
     }
@@ -183,6 +185,7 @@ sealed interface PlayerPreferencesUiEvent {
     data class ShowDialog(val value: PlayerPreferenceDialog?) : PlayerPreferencesUiEvent
     data class UpdatePlaybackResume(val resume: Resume) : PlayerPreferencesUiEvent
     data object ToggleAutoplay : PlayerPreferencesUiEvent
+    data object ToggleTunneledPlayback : PlayerPreferencesUiEvent
     data object ToggleAutoPip : PlayerPreferencesUiEvent
     data object ToggleAutoBackgroundPlay : PlayerPreferencesUiEvent
     data object ToggleRememberBrightnessLevel : PlayerPreferencesUiEvent

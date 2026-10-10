@@ -521,4 +521,35 @@
     <string name="more">Więcej</string>
     <string name="trash_empty_title">Kosz jest pusty</string>
     <string name="trash_empty_description">Wideo przeniesione do kosza pojawią się w tym miejscu. Możesz je przywrócić lub trwale usunąć.</string>
+    <string name="chapters">Rozdziały</string>
+    <string name="chapter_number">Rozdział %1$d</string>
+    <string name="show_chapters">Pokazuj rozdziały</string>
+    <string name="open_audio">Otwórz lokalny plik audio</string>
+    <string name="error_opening_audio">Nie można otworzyć tego pliku audio</string>
+    <string name="new_label">Nowe</string>
+    <plurals name="new_videos_count">
+        <item quantity="one">%1$d nowe wideo</item>
+        <item quantity="few">%1$d nowe wideo</item>
+        <item quantity="many">%1$d nowych wideo</item>
+        <item quantity="other">%1$d nowych wideo</item>
+    </plurals>
+    <string name="mark_new_media">Oznacz nowo dodane pliki multimedialne jako nowe</string>
+    <plurals name="days_count">
+        <item quantity="one">%1$d dzień</item>
+        <item quantity="few">%1$d dni</item>
+        <item quantity="many">%1$d dni</item>
+        <item quantity="other">%1$d dni</item>
+    </plurals>
+    <string name="tunneled_playback">Odtwarzanie tunelowe</string>
+    <string name="tunneled_playback_description">Jeśli urządzenie i pliki multimedialne obsługują odtwarzanie tunelowane, należy z niego korzystać. Może to poprawić jakość odtwarzania formatów Dolby Vision i HDR10+ na telewizorach z systemem Android TV. Dotyczy nowych sesji odtwarzania.</string>
+    <string name="turn_off_watch_history">Wyłącz historię odtwarzania</string>
+    <string name="turn_on_watch_history">Włącz historię odtwarzania</string>
+    <string name="turn_off_watch_history_confirmation">Wyłączenie historii odtwarzania spowoduje wyczyszczenie historii odtwarzania i wstrzymanie zapisywania wideo, które oglądasz.</string>
+    <string name="turn_on_watch_history_confirmation">Czy chcesz zacząć zapisywać wideo, które oglądasz, w historii odtwarzania?</string>
+    <string name="watch_history_turned_off">Historia odtwarzania jest wyłączona</string>
+    <string name="no_watch_history">Brak historii odtwarzania</string>
+    <string name="watch_history">Historia odtwarzania</string>
+    <string name="watch_history_desc">Prowadź rejestr obejrzanych wideo</string>
+    <string name="network_watch_history">Historia przeglądania sieci</string>
+    <string name="network_watch_history_desc">Dodawaj odtworzone przez sieć wideo do historii odtwarzania.</string>
 </resources>
