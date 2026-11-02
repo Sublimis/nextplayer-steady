@@ -14,7 +14,7 @@ android {
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        applicationId = "dev.anilbeesetti.nextplayer"
+        applicationId = "com.sublimis.nextplayer"
         versionCode = 77
         versionName = "0.20.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -148,6 +148,8 @@ dependencies {
     implementation(libs.accompanist.permissions)
 
     implementation(libs.github.anilbeesetti.nextlib.mediainfo)
+
+    implementation(libs.steadyscreenlib)
 
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)

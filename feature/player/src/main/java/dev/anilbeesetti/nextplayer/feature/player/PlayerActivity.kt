@@ -67,6 +67,7 @@ import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
+import io.github.sublimis.steadyscreen.SteadyScreen
 
 internal fun shouldResumeExistingPlayback(
     returningFromBackground: Boolean,
@@ -151,6 +152,8 @@ class PlayerActivity : ComponentActivity() {
 
     private val subtitleFileSuspendLauncher =
         registerForSuspendActivityResult(contract = OpenDocumentAtInitialUri())
+
+    private val steadyScreen: SteadyScreen = SteadyScreen(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val request = PlayerApi(intent)
@@ -248,6 +251,19 @@ class PlayerActivity : ComponentActivity() {
                 finish()
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        steadyScreen.clear()
+        steadyScreen.attachView(window.decorView)
+    }
+
+    override fun onStop() {
+        steadyScreen.destroy()
+
+        super.onStop()
     }
 
     override fun onDestroy() {

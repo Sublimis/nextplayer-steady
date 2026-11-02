@@ -68,7 +68,7 @@ import dev.anilbeesetti.nextplayer.core.ui.components.tvListFocus
 import dev.anilbeesetti.nextplayer.core.ui.designsystem.NextIcons
 import kotlinx.coroutines.launch
 
-private const val GITHUB_URL = "https://github.com/anilbeesetti/nextplayer"
+private const val GITHUB_URL = "https://github.com/Sublimis/nextplayer-steady"
 private const val GITHUB_SPONSORS_URL = "https://github.com/sponsors/anilbeesetti"
 private const val KOFI_URL = "https://ko-fi.com/anilbeesetti"
 private const val PAYPAL_URL = "https://paypal.me/AnilBeesetti"
@@ -294,7 +294,7 @@ fun AboutApp(
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Top,
                 ) {
                     Text(
                         text = appVersion,
