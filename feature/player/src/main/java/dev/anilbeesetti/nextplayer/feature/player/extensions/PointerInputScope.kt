@@ -18,6 +18,7 @@ import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.positionChanged
 import kotlin.math.abs
+import kotlinx.coroutines.CancellationException
 
 /**
  * Detects custom transform gestures including pan, zoom, and rotation gestures.
@@ -102,9 +103,9 @@ suspend fun PointerInputScope.detectCustomTransformGestures(
                     pan += panChange
 
                     val centroidSize = event.calculateCentroidSize(useCurrent = false)
-                    val zoomMotion = abs(1 - zoom) * centroidSize
+                    val zoomMotion = abs(x = 1 - zoom) * centroidSize
                     val rotationMotion = abs(
-                        rotation * kotlin.math.PI.toFloat() * centroidSize / 180f,
+                        x = rotation * kotlin.math.PI.toFloat() * centroidSize / 180f,
                     )
                     val panMotion = pan.getDistance()
 
@@ -120,10 +121,7 @@ suspend fun PointerInputScope.detectCustomTransformGestures(
                 if (pastTouchSlop) {
                     val centroid = event.calculateCentroid(useCurrent = false)
                     val effectiveRotation = if (lockedToPanZoom) 0f else rotationChange
-                    if (effectiveRotation != 0f ||
-                        zoomChange != 1f ||
-                        panChange != Offset.Zero
-                    ) {
+                    if (effectiveRotation != 0f || zoomChange != 1f || panChange != Offset.Zero) {
                         onGesture(
                             centroid,
                             panChange,
@@ -149,6 +147,7 @@ suspend fun PointerInputScope.detectCustomTransformGestures(
 }
 
 suspend fun PointerInputScope.detectCustomHorizontalDragGestures(
+    shouldStartGesture: (Offset) -> Boolean = { true },
     onDragStart: (Offset) -> Unit = {},
     onDragEnd: () -> Unit = {},
     onDragCancel: () -> Unit = {},
@@ -156,6 +155,8 @@ suspend fun PointerInputScope.detectCustomHorizontalDragGestures(
 ) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
+        // Reject the whole gesture before touch slop can move it out of a system edge.
+        if (!shouldStartGesture(down.position)) return@awaitEachGesture
         var overSlop = 0f
         val drag = awaitHorizontalTouchSlopOrCancellation(down.id) { change, over ->
             change.consume()
@@ -163,22 +164,35 @@ suspend fun PointerInputScope.detectCustomHorizontalDragGestures(
         }
         if (drag != null && currentEvent.changes.count { it.pressed } == 1) {
             onDragStart.invoke(drag.position)
-            onHorizontalDrag(drag, overSlop)
-            if (
-                horizontalDrag(drag.id) {
-                    onHorizontalDrag(it, it.positionChange().x)
-                    it.consume()
+            try {
+                onHorizontalDrag(
+                    drag,
+                    overSlop,
+                )
+                if (
+                    horizontalDrag(drag.id) {
+                        onHorizontalDrag(
+                            it,
+                            it.positionChange().x,
+                        )
+                        it.consume()
+                    }
+                ) {
+                    onDragEnd()
+                } else {
+                    onDragCancel()
                 }
-            ) {
-                onDragEnd()
-            } else {
+            } catch (e: CancellationException) {
+                // Restarting/removing pointerInput cancels the coroutine without a pointer up.
                 onDragCancel()
+                throw e
             }
         }
     }
 }
 
 suspend fun PointerInputScope.detectCustomVerticalDragGestures(
+    shouldStartGesture: (Offset) -> Boolean = { true },
     onDragStart: (Offset) -> Unit = {},
     onDragEnd: () -> Unit = {},
     onDragCancel: () -> Unit = {},
@@ -186,6 +200,7 @@ suspend fun PointerInputScope.detectCustomVerticalDragGestures(
 ) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
+        if (!shouldStartGesture(down.position)) return@awaitEachGesture
         var overSlop = 0f
         val drag = awaitVerticalTouchSlopOrCancellation(down.id) { change, over ->
             change.consume()
@@ -193,10 +208,15 @@ suspend fun PointerInputScope.detectCustomVerticalDragGestures(
         }
         if (drag != null && currentEvent.changes.count { it.pressed } == 1) {
             onDragStart.invoke(drag.position)
-            onVerticalDrag.invoke(drag, overSlop)
-            if (
-                verticalDrag(drag.id) {
-                    onVerticalDrag(it, it.positionChange().y)
+            onVerticalDrag.invoke(
+                drag,
+                overSlop,
+            )
+            if (verticalDrag(drag.id) {
+                    onVerticalDrag(
+                        it,
+                        it.positionChange().y,
+                    )
                     it.consume()
                 }
             ) {

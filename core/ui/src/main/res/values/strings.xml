@@ -246,6 +246,7 @@
     <string name="donate">Donate</string>
     <string name="error_opening_link">No app found to handle this link</string>
     <string name="support_the_developer_on">Support the developer on %1$s</string>
+    <string name="github_sponsors">GitHub Sponsors</string>
     <string name="kofi">Ko-fi</string>
     <string name="paypal">PayPal</string>
     <string name="upi">UPI</string>
@@ -505,6 +506,8 @@
     <string name="empty_playlist_title">This playlist is empty</string>
     <string name="empty_playlist_description">Select videos in Home and choose Add to playlist.</string>
     <string name="playlist_unavailable">This playlist is no longer available.</string>
+    <string name="add_to_home_screen">Add to home screen</string>
+    <string name="playlist_shortcut_failed">Couldn\'t add the playlist shortcut. Try again.</string>
     <string name="search_playlist">Search playlist</string>
     <string name="close_search">Close search</string>
     <string name="no_matching_videos">No matching videos</string>

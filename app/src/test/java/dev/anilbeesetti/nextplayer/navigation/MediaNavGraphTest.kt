@@ -10,6 +10,7 @@ import dev.anilbeesetti.nextplayer.feature.player.utils.PlaylistPlaybackContract
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -24,12 +25,22 @@ class MediaNavGraphTest {
         val context = Robolectric.buildActivity(Activity::class.java).setup().get()
         val uri = "content://media/external/video/media/1821".toUri()
 
-        context.startPlayback(listOf(uri))
+        context.startPlayback(uris = listOf(element = uri))
 
         val intent = shadowOf(context).nextStartedActivity
+        assertTrue(
+            intent.getBooleanExtra(
+                "video_list_is_explicit",
+                false,
+            ),
+        )
         assertEquals(
             arrayListOf(uri),
-            IntentCompat.getParcelableArrayListExtra(intent, PlayerApi.API_PLAYLIST, Uri::class.java),
+            IntentCompat.getParcelableArrayListExtra(
+                intent,
+                PlayerApi.API_PLAYLIST,
+                Uri::class.java,
+            ),
         )
     }
 
@@ -38,17 +49,23 @@ class MediaNavGraphTest {
         val context = Robolectric.buildActivity(Activity::class.java).setup().get()
         val uri = "content://media/external/video/media/1821".toUri()
 
-        context.startPlayback(uri)
+        context.startPlayback(uri = uri)
 
         val intent = shadowOf(context).nextStartedActivity
         assertFalse(intent.hasExtra(PlayerApi.API_PLAYLIST))
+        assertFalse(
+            intent.getBooleanExtra(
+                "video_list_is_explicit",
+                false,
+            ),
+        )
     }
 
     @Test
     fun `empty explicit playlist does not start playback`() {
         val context = Robolectric.buildActivity(Activity::class.java).setup().get()
 
-        context.startPlayback(emptyList())
+        context.startPlayback(uris = emptyList())
 
         assertNull(shadowOf(context).nextStartedActivity)
     }
@@ -59,13 +76,35 @@ class MediaNavGraphTest {
         val first = "content://media/external/video/media/1".toUri()
         val second = "content://media/external/video/media/2".toUri()
 
-        context.startPlayback(listOf(first, second), startUri = second)
+        context.startPlayback(
+            uris = listOf(
+                first,
+                second,
+            ),
+            startUri = second,
+        )
 
         val intent = shadowOf(context).nextStartedActivity
-        assertEquals(second, intent.data)
+        assertTrue(
+            intent.getBooleanExtra(
+                "video_list_is_explicit",
+                false,
+            ),
+        )
         assertEquals(
-            arrayListOf(first, second),
-            IntentCompat.getParcelableArrayListExtra(intent, PlayerApi.API_PLAYLIST, Uri::class.java),
+            second,
+            intent.data,
+        )
+        assertEquals(
+            arrayListOf(
+                first,
+                second,
+            ),
+            IntentCompat.getParcelableArrayListExtra(
+                intent,
+                PlayerApi.API_PLAYLIST,
+                Uri::class.java,
+            ),
         )
     }
 
@@ -80,11 +119,20 @@ class MediaNavGraphTest {
         )
 
         val intent = shadowOf(context).nextStartedActivity
-        assertEquals(Intent.ACTION_VIEW, intent.action)
-        assertEquals(selected, intent.data)
+        assertEquals(
+            Intent.ACTION_VIEW,
+            intent.action,
+        )
+        assertEquals(
+            selected,
+            intent.data,
+        )
         assertEquals(
             42L,
-            intent.getLongExtra(PlaylistPlaybackContract.EXTRA_PLAYLIST_ID, -1),
+            intent.getLongExtra(
+                PlaylistPlaybackContract.EXTRA_PLAYLIST_ID,
+                -1,
+            ),
         )
         assertFalse(intent.hasExtra(PlayerApi.API_PLAYLIST))
     }

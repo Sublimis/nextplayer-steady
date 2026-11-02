@@ -16,6 +16,11 @@ data class ApplicationPreferences(
     val mediaViewMode: MediaViewMode = MediaViewMode.FOLDERS,
     val mediaLayoutMode: MediaLayoutMode = MediaLayoutMode.LIST,
 
+    // Network browser
+    val networkSortBy: Sort.By = Sort.By.TITLE,
+    val networkSortOrder: Sort.Order = Sort.Order.ASCENDING,
+    val networkMediaLayoutMode: MediaLayoutMode = MediaLayoutMode.LIST,
+
     // Fields
     val showDurationField: Boolean = true,
     val showFolderDurationField: Boolean = true,
@@ -29,7 +34,8 @@ data class ApplicationPreferences(
     val newVideoThresholdDays: Int = 7,
 
     // Thumbnail generation
-    val thumbnailGenerationStrategy: ThumbnailGenerationStrategy = ThumbnailGenerationStrategy.FRAME_AT_PERCENTAGE,
+    val thumbnailGenerationStrategy: ThumbnailGenerationStrategy =
+        ThumbnailGenerationStrategy.FRAME_AT_PERCENTAGE,
     val thumbnailFramePosition: Float = DEFAULT_THUMBNAIL_FRAME_POSITION,
 ) {
 

@@ -24,6 +24,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -61,18 +63,23 @@ internal fun MediaPlayerControls(
     isPipSupported: Boolean,
     onPictureInPictureClick: () -> Unit,
     modifier: Modifier = Modifier,
+    dpadUpDown: Int? = null,
 ) {
     val playerPreferences = state.playerPreferences
-    val metadataState = rememberMetadataState(player)
-    val mediaPresentationState = rememberMediaPresentationState(player)
-    val progressState = rememberProgressStateWithTickInterval(player)
-    val chaptersState = rememberChaptersState(player, progressState)
+    val metadataState = rememberMetadataState(player = player)
+    val mediaPresentationState = rememberMediaPresentationState(player = player)
+    val progressState = rememberProgressStateWithTickInterval(player = player)
+    val chaptersState = rememberChaptersState(
+        player = player,
+        progressState = progressState,
+    )
     val keyInputState = rememberPlayerKeyInputState(
         player = player,
         controls = controlsVisibilityState,
         seekIncrementMs = playerPreferences.seekIncrement.seconds.inWholeMilliseconds,
+        dpadUpDown = dpadUpDown,
     )
-    var overlayView by remember { mutableStateOf<OverlayView?>(null) }
+    var overlayView by remember { mutableStateOf<OverlayView?>(value = null) }
     LaunchedEffect(metadataState.mediaId) {
         if (overlayView == OverlayView.CHAPTERS) overlayView = null
     }
@@ -84,21 +91,28 @@ internal fun MediaPlayerControls(
 
     val context = LocalContext.current
     val isTv = remember { context.isTelevision }
+    val handleDpadKeys = isTv || dpadUpDown != null
     val rootFocusRequester = remember { FocusRequester() }
     val middleControlsFocusRequester = remember { FocusRequester() }
     val unlockFocusRequester = remember { FocusRequester() }
-    var isMiddleControlsFocused by remember { mutableStateOf(false) }
-    var isUnlockFocused by remember { mutableStateOf(false) }
-    if (isTv) {
-        LaunchedEffect(controlsVisibilityState.controlsVisible, controlsVisibilityState.controlsLocked, overlayView) {
+    var isMiddleControlsFocused by remember { mutableStateOf(value = false) }
+    var isUnlockFocused by remember { mutableStateOf(value = false) }
+    if (handleDpadKeys) {
+        LaunchedEffect(
+            controlsVisibilityState.controlsVisible,
+            controlsVisibilityState.controlsLocked,
+            key3 = overlayView,
+        ) {
             if (overlayView != null) return@LaunchedEffect
-            if (!controlsVisibilityState.controlsVisible) {
+            if (!isTv || !controlsVisibilityState.controlsVisible) {
                 runCatching { rootFocusRequester.requestFocus() }
                 return@LaunchedEffect
             }
             val locked = controlsVisibilityState.controlsLocked
             val target = if (locked) unlockFocusRequester else middleControlsFocusRequester
-            target.requestFocusUntilLanded(attempts = 20) { if (locked) isUnlockFocused else isMiddleControlsFocused }
+            target.requestFocusUntilLanded(attempts = 20) {
+                if (locked) isUnlockFocused else isMiddleControlsFocused
+            }
         }
     }
 
@@ -109,16 +123,27 @@ internal fun MediaPlayerControls(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .thenIf(isTv) {
-                    focusRequester(rootFocusRequester)
+                .thenIf(condition = handleDpadKeys) {
+                    focusRequester(focusRequester = rootFocusRequester)
                         .focusable()
                         .onPreviewKeyEvent { keyEvent ->
-                            if (overlayView != null) false else keyInputState.onKeyEvent(keyEvent)
+                            if (overlayView != null ||
+                                (
+                                    !isTv && keyEvent.key != Key.DirectionUp &&
+                                        keyEvent.key != Key.DirectionDown
+                                    )
+                            ) {
+                                false
+                            } else {
+                                keyInputState.onKeyEvent(keyEvent = keyEvent)
+                            }
                         }
                 },
         ) {
             AnimatedVisibility(
-                visible = controlsVisibilityState.controlsVisible && !controlsVisibilityState.controlsLocked,
+                visible =
+                    controlsVisibilityState.controlsVisible &&
+                        !controlsVisibilityState.controlsLocked,
                 enter = fadeIn(),
                 exit = fadeOut(),
             ) {
@@ -135,7 +160,7 @@ internal fun MediaPlayerControls(
                         .size(72.dp),
                 )
             }
-            PlayerGestureIndicators(tapGestureState)
+            PlayerGestureIndicators(tapGestureState = tapGestureState)
             DpadSeekIndicator(
                 visible = keyInputState.isSeeking && keyInputState.seekOffsetMs != 0L,
                 offsetMs = keyInputState.seekOffsetMs,
@@ -145,8 +170,8 @@ internal fun MediaPlayerControls(
             if (controlsVisibilityState.controlsVisible && controlsVisibilityState.controlsLocked) {
                 PlayerLockedControls(
                     onUnlockControls = controlsVisibilityState::unlockControls,
-                    unlockButtonModifier = Modifier.thenIf(isTv) {
-                        focusRequester(unlockFocusRequester)
+                    unlockButtonModifier = Modifier.thenIf(condition = isTv) {
+                        focusRequester(focusRequester = unlockFocusRequester)
                             .onFocusChanged { isUnlockFocused = it.hasFocus }
                     },
                 )
@@ -167,8 +192,8 @@ internal fun MediaPlayerControls(
                     onPlayInBackgroundClick = { onAction(PlayerAction.PlayInBackground) },
                     onToggleTimeDisplay = { onAction(PlayerAction.ToggleTimeDisplay) },
                     onPictureInPictureClick = onPictureInPictureClick,
-                    middleControlsModifier = Modifier.thenIf(isTv) {
-                        focusRequester(middleControlsFocusRequester)
+                    middleControlsModifier = Modifier.thenIf(condition = isTv) {
+                        focusRequester(focusRequester = middleControlsFocusRequester)
                             .onFocusChanged { isMiddleControlsFocused = it.hasFocus }
                     },
                 )
@@ -190,12 +215,19 @@ internal fun MediaPlayerControls(
                 audioDecoderMode = state.decoderServiceState.audioMode,
                 videoContentScale = videoZoomAndContentScaleState.videoContentScale,
                 onDismiss = { overlayView = null },
-                onVideoDecoderModeSelected = { onAction(PlayerAction.SetVideoDecoderMode(it)) },
-                onAudioDecoderModeSelected = { onAction(PlayerAction.SetAudioDecoderMode(it)) },
+                onVideoDecoderModeSelected = {
+                    onAction(PlayerAction.SetVideoDecoderMode(mode = it))
+                },
+                onAudioDecoderModeSelected = {
+                    onAction(PlayerAction.SetAudioDecoderMode(mode = it))
+                },
                 onSelectSubtitleClick = { onAction(PlayerAction.SelectSubtitle) },
                 onSelectAudioClick = { onAction(PlayerAction.SelectAudio) },
-                onSubtitleOptionEvent = { onAction(PlayerAction.OnSubtitleOptionEvent(it)) },
-                onVideoContentScaleChanged = videoZoomAndContentScaleState::onVideoContentScaleChanged,
+                onSubtitleOptionEvent = {
+                    onAction(PlayerAction.OnSubtitleOptionEvent(event = it))
+                },
+                onVideoContentScaleChanged =
+                    videoZoomAndContentScaleState::onVideoContentScaleChanged,
             )
         }
     }
@@ -203,7 +235,10 @@ internal fun MediaPlayerControls(
     BackHandler {
         when {
             overlayView != null -> overlayView = null
-            isTv && controlsVisibilityState.controlsVisible -> controlsVisibilityState.hideControls()
+
+            isTv && controlsVisibilityState.controlsVisible ->
+                controlsVisibilityState.hideControls()
+
             else -> onAction(PlayerAction.NavigateUp)
         }
     }

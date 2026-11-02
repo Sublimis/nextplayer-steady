@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,6 +37,7 @@ import dev.anilbeesetti.nextplayer.feature.player.ui.PlayerGestures
 import dev.anilbeesetti.nextplayer.feature.player.ui.PlayerVerticalGestureIndicators
 import dev.anilbeesetti.nextplayer.feature.player.ui.SubtitleConfiguration
 import dev.anilbeesetti.nextplayer.feature.player.ui.preview.rememberPreviewPlayer
+import dev.anilbeesetti.nextplayer.feature.player.utils.PlayerApi
 import kotlin.time.Duration.Companion.seconds
 
 val LocalControlsVisibilityState = compositionLocalOf<ControlsVisibilityState?> { null }
@@ -45,16 +45,14 @@ val LocalUseMaterialYouControls = compositionLocalOf { false }
 
 @OptIn(UnstableApi::class)
 @Composable
-fun MediaPlayerScreen(
-    viewModel: PlayerViewModel,
-    player: Player?,
-) {
+fun MediaPlayerScreen(viewModel: PlayerViewModel, player: Player?, api: PlayerApi? = null) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     MediaPlayerContent(
         player = player,
         state = state,
         onAction = viewModel::onAction,
+        api = api,
     )
 }
 
@@ -64,6 +62,7 @@ internal fun MediaPlayerContent(
     player: Player?,
     state: PlayerUiState,
     onAction: (PlayerAction) -> Unit,
+    api: PlayerApi? = null,
 ) {
     val playerPreferences = state.playerPreferences
     val isPreview = LocalInspectionMode.current
@@ -107,10 +106,10 @@ internal fun MediaPlayerContent(
     }
     val videoZoomAndContentScaleState = rememberVideoZoomAndContentScaleState(
         player = player,
-        initialContentScale = playerPreferences.playerVideoZoom,
+        initialContentScale = api?.videoContentScale ?: playerPreferences.playerVideoZoom,
         enableZoomGesture = playerPreferences.useZoomControls,
         enablePanGesture = playerPreferences.enablePanGesture,
-        onEvent = { onAction(PlayerAction.OnVideoZoomEvent(it)) },
+        onEvent = { onAction(PlayerAction.OnVideoZoomEvent(event = it)) },
     )
     val brightnessState = if (!isPreview) rememberBrightnessState() else null
     val volumeAndBrightnessGestureState = if (volumeState != null && brightnessState != null) {
@@ -129,12 +128,15 @@ internal fun MediaPlayerContent(
         PlayerOrientationEffect(
             player = player,
             screenOrientation = playerPreferences.playerScreenOrientation,
+            orientationOverride = api?.orientation,
         )
     }
     val errorState = rememberErrorState(player = player)
 
     LaunchedEffect(pictureInPictureState?.isInPictureInPictureMode) {
-        if (pictureInPictureState?.isInPictureInPictureMode == true) controlsVisibilityState.hideControls()
+        if (pictureInPictureState?.isInPictureInPictureMode == true) {
+            controlsVisibilityState.hideControls()
+        }
     }
     LaunchedEffect(tapGestureState.isLongPressGestureInAction) {
         if (tapGestureState.isLongPressGestureInAction) controlsVisibilityState.hideControls()
@@ -158,6 +160,8 @@ internal fun MediaPlayerContent(
                 player = player,
                 pictureInPictureState = pictureInPictureState,
                 videoZoomAndContentScaleState = videoZoomAndContentScaleState,
+                videoVisible = api?.videoVisible ?: true,
+                displayAspectRatio = api?.displayAspectRatio,
                 subtitleConfiguration = SubtitleConfiguration(
                     useSystemCaptionStyle = playerPreferences.useSystemCaptionStyle,
                     showBackground = playerPreferences.subtitleBackground,
@@ -186,11 +190,16 @@ internal fun MediaPlayerContent(
             tapGestureState = tapGestureState,
             seekGestureState = seekGestureState,
             videoZoomAndContentScaleState = videoZoomAndContentScaleState,
+            dpadUpDown = api?.dpadUpDown,
             isPipSupported = pictureInPictureState?.isPipSupported == true,
             onPictureInPictureClick = {
                 pictureInPictureState?.let {
                     if (!it.hasPipPermission) {
-                        Toast.makeText(context, R.string.enable_pip_from_settings, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            R.string.enable_pip_from_settings,
+                            Toast.LENGTH_SHORT,
+                        ).show()
                         it.openPictureInPictureSettings()
                     } else {
                         it.enterPictureInPictureMode()
@@ -198,7 +207,9 @@ internal fun MediaPlayerContent(
                 }
             },
         )
-        if (volumeAndBrightnessGestureState != null && volumeState != null && brightnessState != null) {
+        if (volumeAndBrightnessGestureState != null && volumeState != null &&
+            brightnessState != null
+        ) {
             PlayerVerticalGestureIndicators(
                 activeGesture = volumeAndBrightnessGestureState.activeGesture,
                 volumePercentage = volumeState.volumePercentage,
@@ -208,26 +219,36 @@ internal fun MediaPlayerContent(
         }
     }
 
-    PlayerErrorDialogs(
-        decoderRecoveryState = state.decoderServiceState.recoveryState,
-        playbackError = errorState.playbackError,
-        hasNextMediaItem = player.hasNextMediaItem(),
-        onTryDecoderFallback = { onAction(PlayerAction.TryDecoderFallback) },
-        onPlayNextVideo = {
-            errorState.dismiss()
-            player.seekToNext()
-            player.play()
-        },
-        onExit = {
-            errorState.dismiss()
-            onAction(PlayerAction.NavigateUp)
-        },
-    )
+    if (api?.suppressErrorMessage != true) {
+        PlayerErrorDialogs(
+            decoderRecoveryState = state.decoderServiceState.recoveryState,
+            playbackError = errorState.playbackError,
+            hasNextMediaItem = player.hasNextMediaItem(),
+            onTryDecoderFallback = { onAction(PlayerAction.TryDecoderFallback) },
+            onPlayNextVideo = {
+                errorState.dismiss()
+                player.seekToNext()
+                player.play()
+            },
+            onExit = {
+                errorState.dismiss()
+                onAction(PlayerAction.NavigateUp)
+            },
+        )
+    }
 }
 
 @OptIn(UnstableApi::class)
-@Preview(name = "Landscape", widthDp = 960, heightDp = 540)
-@Preview(name = "Portrait", widthDp = 540, heightDp = 960)
+@Preview(
+    name = "Landscape",
+    widthDp = 960,
+    heightDp = 540,
+)
+@Preview(
+    name = "Portrait",
+    widthDp = 540,
+    heightDp = 960,
+)
 @Composable
 private fun MediaPlayerContentPreview() {
     NextPlayerTheme(darkTheme = true) {
