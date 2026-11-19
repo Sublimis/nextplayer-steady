@@ -11,10 +11,10 @@ import dev.anilbeesetti.nextplayer.core.model.PlayerPreferences
 import dev.anilbeesetti.nextplayer.core.model.Video
 import dev.anilbeesetti.nextplayer.core.model.VideoContentScale
 import dev.anilbeesetti.nextplayer.core.ui.base.MviViewModel
+import dev.anilbeesetti.nextplayer.feature.player.model.DecoderMode
 import dev.anilbeesetti.nextplayer.feature.player.model.DecoderServiceState
 import dev.anilbeesetti.nextplayer.feature.player.state.SubtitleOptionsEvent
 import dev.anilbeesetti.nextplayer.feature.player.state.VideoZoomEvent
-import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.DecoderMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -82,6 +82,8 @@ class PlayerViewModel(
 
             is PlayerAction.UpdatePlayerBrightness -> updatePlayerBrightness(action.value)
 
+            is PlayerAction.UpdateSubtitleOffset -> updateSubtitleOffset(action.y)
+
             is PlayerAction.SetLoopMode -> setLoopMode(action.loopMode)
 
             is PlayerAction.ToggleTimeDisplay -> toggleTimeDisplay()
@@ -106,6 +108,12 @@ class PlayerViewModel(
     private fun updatePlayerBrightness(value: Float) {
         viewModelScope.launch {
             preferencesRepository.updatePlayerPreferences { it.copy(playerBrightness = value) }
+        }
+    }
+
+    private fun updateSubtitleOffset(y: Float) {
+        viewModelScope.launch {
+            preferencesRepository.updatePlayerPreferences { it.copy(subtitleOffsetY = y) }
         }
     }
 
@@ -201,6 +209,7 @@ sealed interface PlayerAction {
     data class UpdateDecoderServiceState(val state: DecoderServiceState) : PlayerAction
     data class UpdatePlayWhenReady(val playWhenReady: Boolean) : PlayerAction
     data class UpdatePlayerBrightness(val value: Float) : PlayerAction
+    data class UpdateSubtitleOffset(val y: Float) : PlayerAction
     data class SetLoopMode(val loopMode: LoopMode) : PlayerAction
     data object ToggleTimeDisplay : PlayerAction
     data class OnVideoZoomEvent(val event: VideoZoomEvent) : PlayerAction

@@ -5,8 +5,8 @@ import dev.anilbeesetti.nextplayer.core.data.repository.fake.FakeMediaRepository
 import dev.anilbeesetti.nextplayer.core.data.repository.fake.FakePreferencesRepository
 import dev.anilbeesetti.nextplayer.core.domain.GetSortedPlaylistUseCase
 import dev.anilbeesetti.nextplayer.core.domain.GetSortedVideosUseCase
+import dev.anilbeesetti.nextplayer.feature.player.model.DecoderMode
 import dev.anilbeesetti.nextplayer.feature.player.model.DecoderServiceState
-import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.DecoderMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
@@ -72,7 +72,7 @@ class PlayerViewModelTest {
         runTest(context = dispatcher) {
             viewModel.onAction(PlayerAction.UpdatePlayWhenReady(playWhenReady = false))
             assertFalse(viewModel.state.value.playWhenReady)
-            val decoderState = DecoderServiceState(videoMode = DecoderMode.SOFTWARE)
+            val decoderState = DecoderServiceState(videoMode = DecoderMode.HW_PLUS)
             viewModel.onAction(PlayerAction.UpdateDecoderServiceState(state = decoderState))
 
             preferences.updatePlayerPreferences { it.copy(playerBrightness = 0.4f) }
@@ -95,6 +95,17 @@ class PlayerViewModelTest {
                 viewModel.state.value.playerPreferences.playerBrightness,
             )
         }
+
+    @Test
+    fun `subtitle offset update is saved to preferences`() = runTest(context = dispatcher) {
+        viewModel.onAction(PlayerAction.UpdateSubtitleOffset(y = -0.4f))
+        runCurrent()
+
+        assertEquals(
+            -0.4f,
+            viewModel.state.value.playerPreferences.subtitleOffsetY,
+        )
+    }
 
     @Test
     fun `queued toggles use latest preferences and preserve playback state`() =

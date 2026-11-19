@@ -7,6 +7,7 @@ import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -19,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.core.util.Consumer
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -33,10 +35,12 @@ import dev.anilbeesetti.nextplayer.core.common.extensions.getInitialDirectoryUri
 import dev.anilbeesetti.nextplayer.core.common.extensions.getMediaContentUri
 import dev.anilbeesetti.nextplayer.core.common.service.registerForSuspendActivityResult
 import dev.anilbeesetti.nextplayer.core.data.repository.PlaylistRepository
+import dev.anilbeesetti.nextplayer.core.data.repository.PreferencesRepository
 import dev.anilbeesetti.nextplayer.core.ui.R as coreUiR
 import dev.anilbeesetti.nextplayer.core.ui.theme.NextPlayerTheme
 import dev.anilbeesetti.nextplayer.feature.player.extensions.OpenDocumentAtInitialUri
 import dev.anilbeesetti.nextplayer.feature.player.extensions.uriToSubtitleConfiguration
+import dev.anilbeesetti.nextplayer.feature.player.model.DecoderMode
 import dev.anilbeesetti.nextplayer.feature.player.service.CustomCommands
 import dev.anilbeesetti.nextplayer.feature.player.service.PlayerService
 import dev.anilbeesetti.nextplayer.feature.player.service.addAudioTrack
@@ -52,7 +56,6 @@ import dev.anilbeesetti.nextplayer.feature.player.state.rememberMediaController
 import dev.anilbeesetti.nextplayer.feature.player.utils.PlayerApi
 import dev.anilbeesetti.nextplayer.feature.player.utils.PlaylistPlaybackContract
 import dev.anilbeesetti.nextplayer.feature.player.utils.toMediaQueue
-import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.DecoderMode
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -81,6 +84,7 @@ internal fun shouldResumeExistingPlayback(
 class PlayerActivity : ComponentActivity() {
 
     private val playlistRepository: PlaylistRepository by inject()
+    private val preferencesRepository: PreferencesRepository by inject()
 
     private val viewModel: PlayerViewModel by viewModel { parametersOf(playerOutput()) }
     val playerPreferences get() = viewModel.state.value.playerPreferences
@@ -104,7 +108,7 @@ class PlayerActivity : ComponentActivity() {
     private var mediaController by mutableStateOf<MediaController?>(null)
     private var playerApi by mutableStateOf(PlayerApi(Intent()))
     private var playbackRequestJob: Job? = null
-
+    private var pendingGrantItems: List<MediaItem> = emptyList()
     private val playbackStateListener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             intent.data = mediaItem?.localConfiguration?.uri
@@ -130,7 +134,25 @@ class PlayerActivity : ComponentActivity() {
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
-            if (playbackState == Player.STATE_READY) hasPlaybackStarted = true
+            if (playbackState == Player.STATE_READY) {
+                hasPlaybackStarted = true
+                if (pendingGrantItems.isNotEmpty()) {
+                    runCatching {
+                        retainPlaybackUriPermissions(
+                            intent,
+                            pendingGrantItems,
+                        )
+                    }
+                        .onSuccess { pendingGrantItems = emptyList() }
+                        .onFailure {
+                            Log.w(
+                                "PlayerActivity",
+                                "Unable to retain playback URI permissions",
+                                it,
+                            )
+                        }
+                }
+            }
             if (playbackState == Player.STATE_ENDED) {
                 isPlaybackFinished = mediaController?.playbackState == Player.STATE_ENDED
                 finishAndStopPlayerSession()
@@ -218,7 +240,12 @@ class PlayerActivity : ComponentActivity() {
             }
 
             if (!playerApi.launchInBackground) {
-                NextPlayerTheme(darkTheme = true) {
+                val preferences by preferencesRepository.applicationPreferences
+                    .collectAsStateWithLifecycle()
+                NextPlayerTheme(
+                    darkTheme = true,
+                    dynamicColor = preferences.useDynamicColors,
+                ) {
                     MediaPlayerScreen(
                         viewModel = viewModel,
                         player = player,
@@ -502,6 +529,8 @@ class PlayerActivity : ComponentActivity() {
     ) {
         val controller = mediaController ?: return
         if (!request.launchInBackground) {
+            // Wait until the service has accepted the queue before handing it the grants.
+            pendingGrantItems = items
             controller.setMediaItems(
                 items,
                 index,
